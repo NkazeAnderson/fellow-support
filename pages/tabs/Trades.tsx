@@ -20,7 +20,7 @@ const Trades = () => {
     <View className="flex flex-1 bg-primary-0 p-4">
       <VStack
         space="md"
-        className="py-4 border border-primary-200 bg-primary-100"
+        className="py-4 border border-primary-200 bg-primary-100 rounded-lg"
       >
         <HStack className=" justify-between items-center px-2">
           <HStack space="md" className=" items-center">

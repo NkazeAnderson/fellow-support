@@ -13,13 +13,19 @@ import { HStack } from "@/components/ui/hstack";
 import { FavouriteIcon, Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
-import { MapPin, Share } from "lucide-react-native";
+import { router } from "expo-router";
+import { MapPin, Share2 } from "lucide-react-native";
 import React from "react";
-import { View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 const Home = () => {
   return (
     <View className="p-2 bg-primary-0 flex flex-1">
-      <Box className="border border-primary-200 rounded-2xl relative">
+      <TouchableOpacity
+        className="border border-primary-200 rounded-2xl relative"
+        onPress={() => {
+          router.push("/stacks/product/1");
+        }}
+      >
         <Badge
           className="absolute top-4 right-4 z-10"
           variant={"solid"}
@@ -71,12 +77,12 @@ const Home = () => {
                 <ButtonIcon as={FavouriteIcon} />
               </Button>
               <Button variant="link">
-                <ButtonIcon as={Share} />
+                <ButtonIcon as={Share2} />
               </Button>
             </HStack>
           </HStack>
         </Box>
-      </Box>
+      </TouchableOpacity>
     </View>
   );
 };

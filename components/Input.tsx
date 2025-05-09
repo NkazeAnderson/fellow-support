@@ -1,3 +1,5 @@
+import { Textarea, TextareaInput } from "@/components/ui/textarea";
+
 import {
   FormControl,
   FormControlError,
@@ -8,11 +10,13 @@ import {
   FormControlLabel,
   FormControlLabelText,
 } from "@/components/ui/form-control";
-import { InputField, InputIcon } from "@/components/ui/input";
-import { AlertCircleIcon } from "lucide-react-native";
-
-import { Input as GlueInput } from "@/components/ui/input";
+import {
+  Input as GlueInput,
+  InputField,
+  InputIcon,
+} from "@/components/ui/input";
 import { IInputFieldProps } from "@gluestack-ui/input/lib/types";
+import { AlertCircleIcon } from "lucide-react-native";
 import React from "react";
 import { Control, Controller, FieldValues, Path } from "react-hook-form";
 import { Pressable, TextInputProps } from "react-native";
@@ -27,7 +31,11 @@ interface TextInputPropsI extends IInputFieldProps, TextInputProps {
     onIconPress?: VoidFunction;
   };
   type: "text" | "password";
+  className?: string;
+}
 
+interface TextAreaInputPropsI extends IInputFieldProps, TextInputProps {
+  type: "textArea";
   className?: string;
 }
 
@@ -36,7 +44,10 @@ const TextInput = ({
   iconRight,
   className,
   ...rest
-}: TextInputPropsI & { onChangeText(e: string): void; value: string }) => {
+}: TextInputPropsI & {
+  onChangeText(e: string): void;
+  value: string;
+}) => {
   return (
     <GlueInput className={className}>
       {iconLeft && (
@@ -53,7 +64,19 @@ const TextInput = ({
     </GlueInput>
   );
 };
-
+const TextAreaInput = ({
+  type,
+  ...rest
+}: TextAreaInputPropsI & {
+  onChangeText(e: string): void;
+  value: string;
+}) => {
+  return (
+    <Textarea>
+      <TextareaInput type="text" {...rest} />
+    </Textarea>
+  );
+};
 function Input<T extends FieldValues>(props: {
   control: Control;
   name: Path<T>;
@@ -63,7 +86,7 @@ function Input<T extends FieldValues>(props: {
   size?: "sm" | "md" | "lg";
   isDisabled?: boolean;
   isRequired?: boolean;
-  specifics: TextInputPropsI;
+  specifics: TextInputPropsI | TextAreaInputPropsI;
 }) {
   return (
     <FormControl
@@ -95,6 +118,14 @@ function Input<T extends FieldValues>(props: {
                 value={value}
               />
             );
+          } else if (props.specifics.type === "textArea") {
+            return (
+              <TextAreaInput
+                {...props.specifics}
+                onChangeText={onChange}
+                value={value}
+              />
+            );
           } else {
             return <></>;
           }
@@ -115,5 +146,4 @@ function Input<T extends FieldValues>(props: {
     </FormControl>
   );
 }
-
 export default Input;

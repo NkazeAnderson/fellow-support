@@ -6,7 +6,7 @@ const index = () => {
   const onboarded = false;
 
   if (!onboarded) {
-    return <Redirect href={"/get-started"} />;
+    return <Redirect href={"/tabs"} />;
   }
   return (
     <View>
