@@ -18,7 +18,13 @@ import {
 import { IInputFieldProps } from "@gluestack-ui/input/lib/types";
 import { AlertCircleIcon } from "lucide-react-native";
 import React from "react";
-import { Control, Controller, FieldValues, Path } from "react-hook-form";
+import {
+  Control,
+  Controller,
+  FieldErrors,
+  FieldValues,
+  Path,
+} from "react-hook-form";
 import { Pressable, TextInputProps } from "react-native";
 
 interface TextInputPropsI extends IInputFieldProps, TextInputProps {
@@ -78,7 +84,7 @@ const TextAreaInput = ({
   );
 };
 function Input<T extends FieldValues>(props: {
-  control: Control;
+  control: Control<T>;
   name: Path<T>;
   label?: string;
   labelClassName?: string;
@@ -86,11 +92,12 @@ function Input<T extends FieldValues>(props: {
   size?: "sm" | "md" | "lg";
   isDisabled?: boolean;
   isRequired?: boolean;
+  errors: FieldErrors<T>;
   specifics: TextInputPropsI | TextAreaInputPropsI;
 }) {
   return (
     <FormControl
-      isInvalid={false}
+      isInvalid={props.errors && props.errors[props.name] ? true : false}
       size={props.size ?? "md"}
       isDisabled={props.isDisabled}
       isRequired={props.isRequired}
@@ -137,12 +144,14 @@ function Input<T extends FieldValues>(props: {
           <FormControlHelperText>{props.helperText}</FormControlHelperText>
         </FormControlHelper>
       )}
-      <FormControlError>
-        <FormControlErrorIcon as={AlertCircleIcon} />
-        <FormControlErrorText>
-          Atleast 6 characters are required.
-        </FormControlErrorText>
-      </FormControlError>
+      {props.errors[props.name]?.message && (
+        <FormControlError>
+          <FormControlErrorIcon as={AlertCircleIcon} />
+          <FormControlErrorText>
+            {props.errors[props.name]?.message as string}
+          </FormControlErrorText>
+        </FormControlError>
+      )}
     </FormControl>
   );
 }

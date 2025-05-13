@@ -8,15 +8,50 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
+import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { AppContext } from "@/context/AppContextProvider";
+import { userSchema } from "@/zodSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "expo-router";
 import { Eye, EyeOffIcon, Lock, Mail } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { z } from "zod";
+
+const schema = userSchema
+  .omit({ id: true, profilePiture: true, favoriteProducts: true })
+  .merge(z.object({ password: z.string() }));
 const SignUp = () => {
   const [showPassword, setshowPassword] = useState(false);
-  const { control } = useForm();
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(schema),
+  });
+  const toast = useToast();
+  const appcontext = useContext(AppContext);
+
+  const signUp = async (data: z.infer<typeof schema>) => {
+    const { email, password } = data;
+    try {
+      // const userInfo = await supabase.auth.signUp({
+      //   email,
+      //   password,
+      // });
+      // if (userInfo.error) {
+      // }
+      if (appcontext) {
+        appcontext.showToast();
+      }
+    } catch (error) {
+      console.log({ error });
+    }
+  };
+
   return (
     <SafeAreaView className="flex flex-1 bg-primary-50 px-4">
       <Heading size="2xl" className="text-center text-primary-600 py-10">
@@ -30,6 +65,7 @@ const SignUp = () => {
               labelClassName="text-primary-600"
               control={control}
               name="firstName"
+              errors={errors}
               specifics={{
                 type: "text",
               }}
@@ -41,6 +77,7 @@ const SignUp = () => {
               labelClassName="text-primary-600"
               control={control}
               name="lastName"
+              errors={errors}
               specifics={{
                 type: "text",
               }}
@@ -52,6 +89,7 @@ const SignUp = () => {
           labelClassName="text-primary-600"
           control={control}
           name="email"
+          errors={errors}
           specifics={{
             type: "text",
             iconLeft: {
@@ -64,6 +102,7 @@ const SignUp = () => {
           control={control}
           labelClassName="text-primary-600"
           name="password"
+          errors={errors}
           specifics={{
             type: !showPassword ? "password" : "text",
             iconLeft: {
@@ -81,7 +120,8 @@ const SignUp = () => {
           action={"primary"}
           variant={"solid"}
           size={"lg"}
-          isDisabled={false}
+          isDisabled={isSubmitting}
+          onPress={handleSubmit(signUp)}
         >
           <ButtonText>Sign Up</ButtonText>
         </Button>
@@ -101,7 +141,7 @@ const SignUp = () => {
           <Text className="text-typography-400">Continue with</Text>
         </Center>
         <VStack space="2xl">
-          <Button variant="outline" size="lg">
+          <Button variant="outline" size="lg" isDisabled={isSubmitting}>
             <Image
               size="xs"
               source={require("@/assets/images/icons8-google-logo-48.png")}
@@ -109,7 +149,7 @@ const SignUp = () => {
             />
             <ButtonText>Google</ButtonText>
           </Button>
-          <Button variant="outline" size="lg">
+          <Button variant="outline" size="lg" isDisabled={isSubmitting}>
             <Image
               size="xs"
               source={require("@/assets/images/icons8-apple-logo-48.png")}
