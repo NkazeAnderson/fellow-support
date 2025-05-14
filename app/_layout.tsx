@@ -12,12 +12,18 @@ import "react-native-reanimated";
 
 import AppContextProvider from "@/context/AppContextProvider";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import * as Linking from "expo-linking";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const url = Linking.useURL();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
+
+  if (url) {
+    console.log(url);
+  }
 
   if (!loaded) {
     // Async font loading only occurs in development.

@@ -7,9 +7,14 @@ import { ArrowRightIcon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { Link } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+function confirmOnboarded() {
+  AsyncStorage.setItem("onBoarded", "true");
+}
 
 const GetStarted = () => {
   return (
@@ -36,12 +41,16 @@ const GetStarted = () => {
           </Box>
         </Box>
         <VStack className="flex-1 justify-end py-8">
-          <Link href={"/(auth)/signup"} asChild>
-            <Button className="w-full">
-              <ButtonText>Get Started</ButtonText>
-              <ButtonIcon as={ArrowRightIcon} />
-            </Button>
-          </Link>
+          <Button
+            className="w-full"
+            onPress={() => {
+              router.replace("/login");
+              confirmOnboarded();
+            }}
+          >
+            <ButtonText>Get Started</ButtonText>
+            <ButtonIcon as={ArrowRightIcon} />
+          </Button>
         </VStack>
       </SafeAreaView>
     </Box>

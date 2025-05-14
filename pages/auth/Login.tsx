@@ -1,4 +1,4 @@
-import { Button, ButtonText } from "@/components/ui/button";
+import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
 
 import Input from "@/components/Input";
 import { Box } from "@/components/ui/box";
@@ -9,14 +9,32 @@ import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { Link, router } from "expo-router";
+import { supabase } from "@/supabase";
+import { userSchema } from "@/zodSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Link } from "expo-router";
 import { Eye, EyeOffIcon, Lock, Mail } from "lucide-react-native";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { z } from "zod";
+
+const schema = userSchema
+  .pick({ email: true })
+  .merge(z.object({ password: z.string() }));
 const Login = () => {
   const [showPassword, setshowPassword] = useState(false);
-  const { control } = useForm();
+  const {
+    control,
+    formState: { errors, isSubmitting },
+    handleSubmit,
+  } = useForm({ resolver: zodResolver(schema) });
+
+  const login = async ({ email, password }: z.infer<typeof schema>) => {
+    try {
+      const res = await supabase.auth.signInWithPassword({ email, password });
+    } catch (error) {}
+  };
   return (
     <SafeAreaView className="flex flex-1 bg-primary-50 px-4">
       <Heading size="2xl" className="text-center text-primary-600 py-10">
@@ -27,6 +45,7 @@ const Login = () => {
           label="Email"
           labelClassName="text-primary-600"
           control={control}
+          errors={errors}
           name="email"
           specifics={{
             type: "text",
@@ -38,10 +57,11 @@ const Login = () => {
         <Input
           label="Password"
           control={control}
+          errors={errors}
           labelClassName="text-primary-600"
           name="password"
           specifics={{
-            type: showPassword ? "password" : "text",
+            type: !showPassword ? "password" : "text",
             iconLeft: {
               icon: Lock,
             },
@@ -57,9 +77,10 @@ const Login = () => {
           action={"primary"}
           variant={"solid"}
           size={"lg"}
-          isDisabled={false}
-          onPress={() => router.push("/tabs")}
+          isDisabled={isSubmitting}
+          onPress={handleSubmit(login)}
         >
+          {isSubmitting && <ButtonSpinner />}
           <ButtonText>Log In</ButtonText>
         </Button>
       </Box>
