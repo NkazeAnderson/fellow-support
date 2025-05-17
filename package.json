@@ -11,7 +11,7 @@
     "gen-migrations": "drizzle-kit generate",
     "gen-DatabaseTypes": "npx supabase gen types typescript --project-id dvgzcqmbisxscthmkvxm > database.types.ts",
     "migrate": "drizzle-kit migrate",
-    "gen-migrate-types":"npm run gen-migrations & npm run migrate & npm run gen-DatabaseTypes"
+    "gen-migrate-types": "npm run gen-migrations & npm run migrate & npm run gen-DatabaseTypes"
   },
   "dependencies": {
     "@expo/html-elements": "^0.4.2",
