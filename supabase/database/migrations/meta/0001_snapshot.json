@@ -1,6 +1,6 @@
 {
-  "id": "ed084b28-c161-4867-b524-5b3a846a5b15",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "5ba79ac9-19e1-41d9-9ca1-147cc8fce0fe",
+  "prevId": "ed084b28-c161-4867-b524-5b3a846a5b15",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -220,6 +220,12 @@
         "subCategory": {
           "name": "subCategory",
           "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         }

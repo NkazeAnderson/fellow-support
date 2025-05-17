@@ -9,6 +9,21 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      Category: {
+        Row: {
+          estimatableValue: boolean | null
+          name: string
+        }
+        Insert: {
+          estimatableValue?: boolean | null
+          name: string
+        }
+        Update: {
+          estimatableValue?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
       Chats: {
         Row: {
           id: string
@@ -62,9 +77,11 @@ export type Database = {
           createdAt: string
           description: string
           id: string
+          location: string
           name: string
           owner: string | null
           picturesUrl: string[]
+          subCategory: string
           value: number | null
         }
         Insert: {
@@ -72,9 +89,11 @@ export type Database = {
           createdAt?: string
           description: string
           id?: string
+          location: string
           name: string
           owner?: string | null
           picturesUrl: string[]
+          subCategory: string
           value?: number | null
         }
         Update: {
@@ -82,9 +101,11 @@ export type Database = {
           createdAt?: string
           description?: string
           id?: string
+          location?: string
           name?: string
           owner?: string | null
           picturesUrl?: string[]
+          subCategory?: string
           value?: number | null
         }
         Relationships: [
@@ -94,6 +115,39 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "Users"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Products_subCategory_SubCategory_id_fk"
+            columns: ["subCategory"]
+            isOneToOne: false
+            referencedRelation: "SubCategory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      SubCategory: {
+        Row: {
+          category: string
+          id: string
+          name: string
+        }
+        Insert: {
+          category: string
+          id?: string
+          name: string
+        }
+        Update: {
+          category?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "SubCategory_category_Category_name_fk"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "Category"
+            referencedColumns: ["name"]
           },
         ]
       }
@@ -154,6 +208,7 @@ export type Database = {
           id: string
           lastName: string
           profilePiture: string | null
+          subscriptionExpirationDate: string | null
         }
         Insert: {
           email: string
@@ -162,6 +217,7 @@ export type Database = {
           id?: string
           lastName: string
           profilePiture?: string | null
+          subscriptionExpirationDate?: string | null
         }
         Update: {
           email?: string
@@ -170,6 +226,7 @@ export type Database = {
           id?: string
           lastName?: string
           profilePiture?: string | null
+          subscriptionExpirationDate?: string | null
         }
         Relationships: []
       }

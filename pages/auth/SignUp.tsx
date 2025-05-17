@@ -13,6 +13,7 @@ import { VStack } from "@/components/ui/vstack";
 import { tables } from "@/constants";
 import { AppContext, AppContextT } from "@/context/AppContextProvider";
 import { supabase } from "@/supabase";
+import { handleSubmitErrorHandler } from "@/utils";
 import { userSchema } from "@/zodSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, router } from "expo-router";
@@ -156,7 +157,7 @@ const SignUp = () => {
             variant={"solid"}
             size={"lg"}
             isDisabled={isSubmitting}
-            onPress={handleSubmit(signUp)}
+            onPress={handleSubmit(signUp, handleSubmitErrorHandler)}
           >
             {isSubmitting && <ButtonSpinner />}
             <ButtonText>Sign Up</ButtonText>

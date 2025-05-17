@@ -1,4 +1,16 @@
-import { Textarea, TextareaInput } from "@/components/ui/textarea";
+import { ChevronDownIcon } from "@/components/ui/icon";
+import {
+  Select,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicator,
+  SelectDragIndicatorWrapper,
+  SelectIcon,
+  SelectInput,
+  SelectItem,
+  SelectPortal,
+  SelectTrigger,
+} from "@/components/ui/select";
 
 import {
   FormControl,
@@ -15,7 +27,9 @@ import {
   InputField,
   InputIcon,
 } from "@/components/ui/input";
+import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { IInputFieldProps } from "@gluestack-ui/input/lib/types";
+import { ISelectItemProps } from "@gluestack-ui/select/lib/types";
 import { AlertCircleIcon } from "lucide-react-native";
 import React from "react";
 import {
@@ -26,6 +40,11 @@ import {
   Path,
 } from "react-hook-form";
 import { Pressable, TextInputProps } from "react-native";
+
+interface controlI {
+  onChangeText(e: string): void;
+  value: string;
+}
 
 interface TextInputPropsI extends IInputFieldProps, TextInputProps {
   iconLeft?: {
@@ -39,21 +58,24 @@ interface TextInputPropsI extends IInputFieldProps, TextInputProps {
   type: "text" | "password";
   className?: string;
 }
-
 interface TextAreaInputPropsI extends IInputFieldProps, TextInputProps {
   type: "textArea";
   className?: string;
 }
-
+interface SelectInputPropsI
+  extends IInputFieldProps,
+    Omit<ISelectItemProps, "label" | "value">,
+    TextInputProps {
+  type: "select";
+  className?: string;
+  options: string[];
+}
 const TextInput = ({
   iconLeft,
   iconRight,
   className,
   ...rest
-}: TextInputPropsI & {
-  onChangeText(e: string): void;
-  value: string;
-}) => {
+}: TextInputPropsI & controlI) => {
   return (
     <GlueInput className={className}>
       {iconLeft && (
@@ -70,19 +92,43 @@ const TextInput = ({
     </GlueInput>
   );
 };
-const TextAreaInput = ({
-  type,
-  ...rest
-}: TextAreaInputPropsI & {
-  onChangeText(e: string): void;
-  value: string;
-}) => {
+
+const TextAreaInput = ({ type, ...rest }: TextAreaInputPropsI & controlI) => {
   return (
     <Textarea>
       <TextareaInput type="text" {...rest} />
     </Textarea>
   );
 };
+
+const SelectionInput = ({
+  type,
+  options,
+  onChangeText,
+  className,
+  ...rest
+}: SelectInputPropsI & controlI) => {
+  return (
+    <Select onValueChange={onChangeText}>
+      <SelectTrigger>
+        <SelectInput className={`py-0 ${className}`} {...rest} />
+        <SelectIcon className="mr-3 ml-auto" as={ChevronDownIcon} />
+      </SelectTrigger>
+      <SelectPortal>
+        <SelectBackdrop />
+        <SelectContent>
+          <SelectDragIndicatorWrapper>
+            <SelectDragIndicator />
+          </SelectDragIndicatorWrapper>
+          {options.map((item) => (
+            <SelectItem key={item} label={item} value={item} />
+          ))}
+        </SelectContent>
+      </SelectPortal>
+    </Select>
+  );
+};
+
 function Input<T extends FieldValues>(props: {
   control: Control<T>;
   name: Path<T>;
@@ -93,7 +139,7 @@ function Input<T extends FieldValues>(props: {
   isDisabled?: boolean;
   isRequired?: boolean;
   errors: FieldErrors<T>;
-  specifics: TextInputPropsI | TextAreaInputPropsI;
+  specifics: TextInputPropsI | TextAreaInputPropsI | SelectInputPropsI;
 }) {
   return (
     <FormControl
@@ -128,6 +174,14 @@ function Input<T extends FieldValues>(props: {
           } else if (props.specifics.type === "textArea") {
             return (
               <TextAreaInput
+                {...props.specifics}
+                onChangeText={onChange}
+                value={value}
+              />
+            );
+          } else if (props.specifics.type === "select") {
+            return (
+              <SelectionInput
                 {...props.specifics}
                 onChangeText={onChange}
                 value={value}

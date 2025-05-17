@@ -1,6 +1,6 @@
 {
-  "id": "ed084b28-c161-4867-b524-5b3a846a5b15",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "25450705-126b-42d1-9524-b798ea151ef4",
+  "prevId": "441bca54-aaf3-411a-8eef-e824c1238750",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -98,6 +98,13 @@
           "type": "text",
           "primaryKey": true,
           "notNull": true
+        },
+        "estimatableValue": {
+          "name": "estimatableValue",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {},
@@ -220,6 +227,12 @@
         "subCategory": {
           "name": "subCategory",
           "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         }

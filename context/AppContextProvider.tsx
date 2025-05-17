@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/toast";
 import { tables } from "@/constants";
 import { supabase } from "@/supabase";
+import { appConstantsFromDB } from "@/types";
 import { userT } from "@/zodSchema";
 import AsyncStore from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
@@ -18,6 +19,7 @@ import React, {
   createContext,
   PropsWithChildren,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -29,6 +31,7 @@ export interface AppContextT {
     onCloseComplete?: () => void
   ): void;
   user?: userT;
+  constantsFromDB: appConstantsFromDB;
 }
 
 export const AppContext = createContext<null | AppContextT>(null);
@@ -71,6 +74,11 @@ const AppContextProvider = (props: PropsWithChildren) => {
 
   const [user, setUser] = useState<userT>();
 
+  const constantsFromDB = useRef<appConstantsFromDB>({
+    categories: [],
+    subCategories: [],
+  });
+
   supabase.auth.getUser().then((res) => console.log({ res }));
 
   useEffect(() => {
@@ -78,12 +86,31 @@ const AppContextProvider = (props: PropsWithChildren) => {
       if (session) {
         const { user } = session;
         if (user && user.email_confirmed_at) {
-          const userInfo = await supabase
+          const userPromise = supabase
             .from(tables.users)
             .select()
-            .eq("id", user.id);
-          if (userInfo.data) {
-            setUser(userInfo.data[0]);
+            .eq("id", user.id)
+            .single();
+
+          const categoryPromise = supabase.from(tables.category).select();
+          const subCategoryPromise = supabase.from(tables.subCategory).select();
+          const [userRes, categoryRes, subCategoryRes] = await Promise.all([
+            userPromise,
+            categoryPromise,
+            subCategoryPromise,
+          ]);
+
+          if (userRes.data && categoryRes.data && subCategoryRes.data) {
+            setUser(userRes.data);
+            constantsFromDB.current = {
+              categories: categoryRes.data,
+              subCategories: subCategoryRes.data,
+            };
+
+            console.log({
+              categories: categoryRes.data,
+              subCategories: subCategoryRes.data,
+            });
           }
           router.replace("/tabs");
         } else if (user && !user.email_confirmed_at) {
@@ -101,12 +128,14 @@ const AppContextProvider = (props: PropsWithChildren) => {
       }
     });
     return () => {
-      supabase.auth.signOut();
-      console.log("logged out");
+      // supabase.auth.signOut();
+      // console.log("logged out");
     };
   }, []);
   return (
-    <AppContext.Provider value={{ showToast, user }}>
+    <AppContext.Provider
+      value={{ showToast, user, constantsFromDB: constantsFromDB.current }}
+    >
       {props.children}
     </AppContext.Provider>
   );

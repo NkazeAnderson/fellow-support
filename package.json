@@ -9,7 +9,9 @@
     "web": "DARK_MODE=media expo start --web",
     "lint": "expo lint",
     "gen-migrations": "drizzle-kit generate",
-    "migrate": "drizzle-kit migrate"
+    "gen-DatabaseTypes": "npx supabase gen types typescript --project-id dvgzcqmbisxscthmkvxm > database.types.ts",
+    "migrate": "drizzle-kit migrate",
+    "gen-migrate-types":"npm run gen-migrations & npm run migrate & npm run gen-DatabaseTypes"
   },
   "dependencies": {
     "@expo/html-elements": "^0.4.2",
@@ -40,6 +42,7 @@
     "@react-navigation/native": "^7.1.6",
     "@supabase/supabase-js": "^2.49.4",
     "babel-plugin-module-resolver": "^5.0.2",
+    "dotenv": "^16.5.0",
     "drizzle-orm": "^0.41.0",
     "drizzle-zod": "^0.7.1",
     "expo": "^52.0.46",
@@ -50,6 +53,7 @@
     "expo-image": "~2.0.7",
     "expo-image-picker": "~16.0.6",
     "expo-linking": "~7.0.5",
+    "expo-location": "~18.0.10",
     "expo-router": "~4.0.21",
     "expo-splash-screen": "~0.29.24",
     "expo-status-bar": "~2.0.1",

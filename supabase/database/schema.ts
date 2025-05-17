@@ -10,7 +10,19 @@ export const usersTable = pgTable(tables.users, {
   email: text().notNull().unique(),
   profilePiture: text(),
   favoriteProducts:text().array().default([]).notNull(),
+  subscriptionExpirationDate: date()
 });
+
+export const productCategoriesTable = pgTable(tables.category, {
+   name: text().primaryKey().unique().notNull(),
+   estimatableValue: boolean().default(false)
+})
+
+export const productSubCategoriesTable = pgTable(tables.subCategory, {
+  id: uuid().primaryKey().defaultRandom().notNull(),
+   name: text().notNull(),
+   category: text().notNull().references(()=>productCategoriesTable.name),
+})
 
 export const productsTable = pgTable(tables.products, {
   id: uuid().primaryKey().defaultRandom().notNull(),
@@ -21,6 +33,8 @@ export const productsTable = pgTable(tables.products, {
   available:boolean().default(true),
   owner:uuid().references(()=>usersTable.id),
   createdAt:date().defaultNow().notNull(),
+  subCategory:uuid().notNull().references(()=>productSubCategoriesTable.id), 
+  location: text().notNull()
 });
 
 export const tradesTable = pgTable(tables.trades, {
