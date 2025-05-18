@@ -40,6 +40,6 @@ export async function uploadBase64ImageToSupabase(
     }
 
     // Get public URL
-    const { data:{publicUrl} } = supabase.storage.from('public-images').getPublicUrl(fileName);
+    const { data:{publicUrl} } = supabase.storage.from('public-pictures').getPublicUrl(fileName);
     return publicUrl 
 }

@@ -14,7 +14,10 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { View } from "react-native";
 const Search = () => {
-  const { control } = useForm();
+  const {
+    control,
+    formState: { errors },
+  } = useForm();
   return (
     <View className="p-4 gap-4">
       <Input
@@ -27,6 +30,7 @@ const Search = () => {
             icon: SearchIcon,
           },
         }}
+        errors={errors}
       />
 
       <HStack space="2xl" className=" justify-between items-center">

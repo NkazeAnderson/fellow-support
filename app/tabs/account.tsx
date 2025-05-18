@@ -1,12 +1,3 @@
-import React from "react";
-import { Text, View } from "react-native";
+import Account from "@/pages/tabs/Account";
 
-const account = () => {
-  return (
-    <View>
-      <Text>account</Text>
-    </View>
-  );
-};
-
-export default account;
+export default Account;

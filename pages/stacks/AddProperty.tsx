@@ -58,7 +58,7 @@ const AddProperty = () => {
 
   const {
     control,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     setValue,
     handleSubmit,
   } = useForm({
@@ -243,7 +243,11 @@ const AddProperty = () => {
                 control={control}
                 name="value"
                 label="Estimated value "
-                specifics={{ type: "text", iconLeft: { icon: DollarSign } }}
+                specifics={{
+                  type: "text",
+                  iconLeft: { icon: DollarSign },
+                  keyboardType: "number-pad",
+                }}
                 labelClassName="text-primary-600"
                 errors={errors}
               />
@@ -252,6 +256,7 @@ const AddProperty = () => {
           <Box className="px-4 py-10">
             <Button
               onPress={handleSubmit(addProperty, handleSubmitErrorHandler)}
+              disabled={isSubmitting}
             >
               <ButtonText>Add Property</ButtonText>
             </Button>
@@ -280,8 +285,6 @@ const AddProperty = () => {
                 onPress={() =>
                   pickImage({ useCamera: true, includeBase64: true }).then(
                     (res) => {
-                      console.log({ res });
-
                       if (res) {
                         setiImages((prev) => {
                           return [res, ...prev];

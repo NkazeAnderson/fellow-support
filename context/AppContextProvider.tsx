@@ -9,8 +9,9 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { tables } from "@/constants";
+import { useUser } from "@/hooks/useUser";
 import { supabase } from "@/supabase";
-import { appConstantsFromDB } from "@/types";
+import { appConstantsFromDB, populatedProductT } from "@/types";
 import { userT } from "@/zodSchema";
 import { CheckCircle, Info, XCircle } from "lucide-react-native";
 import React, {
@@ -30,6 +31,8 @@ export interface AppContextT {
   ): void;
   user?: userT;
   constantsFromDB: appConstantsFromDB;
+  properties: populatedProductT[];
+  myProperties: populatedProductT[];
 }
 
 export const AppContext = createContext<null | AppContextT>(null);
@@ -70,38 +73,74 @@ const AppContextProvider = (props: PropsWithChildren) => {
     });
   };
 
-  const [user, setUser] = useState<userT>();
+  const [properties, setProperties] = useState<populatedProductT[]>([]);
+  const [myProperties, setMyProperties] = useState<populatedProductT[]>([]);
+  const { user } = useUser();
 
   const constantsFromDB = useRef<appConstantsFromDB>({
     categories: [],
     subCategories: [],
   });
-  const getCategoriesInfo = async () => {
+  const setUpApp = async () => {
     const categoryPromise = supabase.from(tables.category).select();
     const subCategoryPromise = supabase.from(tables.subCategory).select();
-    const [categoryRes, subCategoryRes] = await Promise.all([
-      categoryPromise,
-      subCategoryPromise,
-    ]);
+    supabase
+      .from(tables.products)
+      .select("*, subCategory (*) , owner ( firstName, lastName, id)")
+      .then((res) => {
+        if (res.data as populatedProductT[]) {
+          setProperties(res.data!);
+        } else {
+          console.log(res.error);
+        }
+      });
+    const productPromise = supabase.from(tables.products).select().limit(10);
+    const myProductsPromise = supabase
+      .from(tables.products)
+      .select()
+      .eq("owner", user?.id)
+      .limit(10);
+    const [categoryRes, subCategoryRes, productsRes, myProductsRes] =
+      await Promise.all([
+        categoryPromise,
+        subCategoryPromise,
+        productPromise,
+        myProductsPromise,
+      ]);
 
-    if (categoryRes.data && subCategoryRes.data) {
+    if (
+      categoryRes.data &&
+      subCategoryRes.data &&
+      productsRes.data &&
+      myProductsRes.data
+    ) {
       constantsFromDB.current = {
         categories: categoryRes.data,
         subCategories: subCategoryRes.data,
       };
+
+      setMyProperties(myProductsRes.data);
     }
   };
 
   useEffect(() => {
-    getCategoriesInfo();
-  }, []);
+    if (user) {
+      setUpApp();
+    }
+  }, [user]);
 
   useEffect(() => {
     console.log("Rendered");
   });
   return (
     <AppContext.Provider
-      value={{ showToast, user, constantsFromDB: constantsFromDB.current }}
+      value={{
+        showToast,
+        user,
+        constantsFromDB: constantsFromDB.current,
+        properties,
+        myProperties,
+      }}
     >
       {props.children}
     </AppContext.Provider>

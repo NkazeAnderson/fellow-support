@@ -74,6 +74,7 @@ const TextInput = ({
   iconLeft,
   iconRight,
   className,
+  onChangeText,
   ...rest
 }: TextInputPropsI & controlI) => {
   return (
@@ -83,7 +84,16 @@ const TextInput = ({
           <InputIcon as={iconLeft.icon} />
         </Pressable>
       )}
-      <InputField {...rest} />
+      <InputField
+        {...rest}
+        onChangeText={(text) => {
+          if (rest.keyboardType && rest.keyboardType.includes("pad")) {
+            //@ts-ignore
+            return onChangeText(parseInt(text));
+          }
+          onChangeText(text);
+        }}
+      />
       {iconRight && (
         <Pressable onPress={iconRight.onIconPress} className="mx-2">
           <InputIcon as={iconRight.icon} />
