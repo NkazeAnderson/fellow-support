@@ -1,1 +1,0 @@
-ALTER TABLE "Products" ADD COLUMN "location" text NOT NULL;

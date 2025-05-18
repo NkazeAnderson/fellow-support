@@ -12,8 +12,6 @@ import { tables } from "@/constants";
 import { supabase } from "@/supabase";
 import { appConstantsFromDB } from "@/types";
 import { userT } from "@/zodSchema";
-import AsyncStore from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
 import { CheckCircle, Info, XCircle } from "lucide-react-native";
 import React, {
   createContext,
@@ -78,60 +76,29 @@ const AppContextProvider = (props: PropsWithChildren) => {
     categories: [],
     subCategories: [],
   });
+  const getCategoriesInfo = async () => {
+    const categoryPromise = supabase.from(tables.category).select();
+    const subCategoryPromise = supabase.from(tables.subCategory).select();
+    const [categoryRes, subCategoryRes] = await Promise.all([
+      categoryPromise,
+      subCategoryPromise,
+    ]);
 
-  supabase.auth.getUser().then((res) => console.log({ res }));
+    if (categoryRes.data && subCategoryRes.data) {
+      constantsFromDB.current = {
+        categories: categoryRes.data,
+        subCategories: subCategoryRes.data,
+      };
+    }
+  };
 
   useEffect(() => {
-    supabase.auth.onAuthStateChange(async (e, session) => {
-      if (session) {
-        const { user } = session;
-        if (user && user.email_confirmed_at) {
-          const userPromise = supabase
-            .from(tables.users)
-            .select()
-            .eq("id", user.id)
-            .single();
-
-          const categoryPromise = supabase.from(tables.category).select();
-          const subCategoryPromise = supabase.from(tables.subCategory).select();
-          const [userRes, categoryRes, subCategoryRes] = await Promise.all([
-            userPromise,
-            categoryPromise,
-            subCategoryPromise,
-          ]);
-
-          if (userRes.data && categoryRes.data && subCategoryRes.data) {
-            setUser(userRes.data);
-            constantsFromDB.current = {
-              categories: categoryRes.data,
-              subCategories: subCategoryRes.data,
-            };
-
-            console.log({
-              categories: categoryRes.data,
-              subCategories: subCategoryRes.data,
-            });
-          }
-          router.replace("/tabs");
-        } else if (user && !user.email_confirmed_at) {
-          supabase.auth.resend({ email: user.email as string, type: "signup" });
-        } else {
-        }
-      } else {
-        AsyncStore.getItem("onBoarded").then((res) => {
-          if (res) {
-            router.replace("/login");
-          } else {
-            router.replace("/get-started");
-          }
-        });
-      }
-    });
-    return () => {
-      // supabase.auth.signOut();
-      // console.log("logged out");
-    };
+    getCategoriesInfo();
   }, []);
+
+  useEffect(() => {
+    console.log("Rendered");
+  });
   return (
     <AppContext.Provider
       value={{ showToast, user, constantsFromDB: constantsFromDB.current }}

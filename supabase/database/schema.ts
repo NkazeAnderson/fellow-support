@@ -1,5 +1,6 @@
 import { tables } from '@/constants';
-import { boolean, date, integer, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { eq } from 'drizzle-orm';
+import { boolean, date, integer, pgEnum, pgTable, pgView, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const tradeApprovals = pgEnum("tradeApprovals", ["pending", "accepted", 'declined'])
 
@@ -60,3 +61,6 @@ export const messagesTable = pgTable(tables.messages,{
 })
 
 
+//Views
+
+export const productsView = pgView("products_view").as((qb) => qb.select().from(productsTable).innerJoin(productSubCategoriesTable, eq(productsTable.subCategory, productSubCategoriesTable.id)));

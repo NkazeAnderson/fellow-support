@@ -42,6 +42,7 @@
     "@react-navigation/native": "^7.1.6",
     "@supabase/supabase-js": "^2.49.4",
     "babel-plugin-module-resolver": "^5.0.2",
+    "base64-arraybuffer": "^1.0.2",
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.41.0",
     "drizzle-zod": "^0.7.1",

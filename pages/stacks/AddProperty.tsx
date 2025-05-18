@@ -15,10 +15,15 @@ import { Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { tables } from "@/constants";
 import { AppContext, AppContextT } from "@/context/AppContextProvider";
+import { supabase } from "@/supabase";
+import { uploadBase64ImageToSupabase } from "@/supabase/media";
+import { handleSubmitErrorHandler } from "@/utils";
 import { pickImage } from "@/utils/camera";
 import { categoryT, productSchema } from "@/zodSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ImagePickerAsset } from "expo-image-picker";
 import {
   Camera,
   DollarSign,
@@ -36,11 +41,18 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
+import { z } from "zod";
+
+const schema = productSchema.omit({
+  id: true,
+  createdAt: true,
+  picturesUrl: true,
+});
 
 const AddProperty = () => {
   const { constantsFromDB, user } = useContext(AppContext) as AppContextT;
 
-  const [images, setiImages] = useState<string[]>([]);
+  const [images, setiImages] = useState<ImagePickerAsset[]>([]);
   const [showDrawer, setShowDrawer] = useState(false);
   const [primaryImage, setPrimaryImage] = useState("");
 
@@ -48,11 +60,13 @@ const AddProperty = () => {
     control,
     formState: { errors },
     setValue,
+    handleSubmit,
   } = useForm({
-    resolver: zodResolver(productSchema.omit({ id: true })),
+    resolver: zodResolver(schema),
     defaultValues: {
       owner: user?.id,
       location: "Los Angeles, CA",
+      available: true,
     },
   });
 
@@ -63,9 +77,33 @@ const AddProperty = () => {
     (item) => item.name === selectedCategoryValue
   );
 
-  const subCategories = constantsFromDB.subCategories
-    .filter((item) => item.category === selectedCategoryValue)
-    .map((item) => item.name);
+  const subCategories = constantsFromDB.subCategories.filter(
+    (item) => item.category === selectedCategoryValue
+  );
+
+  const addProperty = async (data: z.infer<typeof schema>) => {
+    try {
+      let newOrderedImages: ImagePickerAsset[] = [];
+
+      images.forEach((item) => {
+        if (item.uri !== primaryImage) {
+          return newOrderedImages.push(item);
+        }
+        newOrderedImages = [item, ...newOrderedImages];
+      });
+
+      const imagePromises: Promise<string>[] = newOrderedImages.map((item) =>
+        uploadBase64ImageToSupabase(item)
+      );
+      const picturesUrl = await Promise.all(imagePromises);
+      const res = await supabase
+        .from(tables.products)
+        .insert({ ...data, picturesUrl });
+      console.log({ res });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const categories = constantsFromDB.categories.map((item) => item.name);
 
@@ -118,23 +156,23 @@ const AddProperty = () => {
                 data={images}
                 renderItem={({ item }) => (
                   <Box
-                    key={item}
+                    key={item.assetId}
                     className="w-[30vw] aspect-square rounded-lg border relative elevation-md"
                   >
                     <Image
                       className="rounded-md"
                       size="full"
-                      source={{ uri: item }}
+                      source={{ uri: item.uri }}
                       alt="image to add"
                     />
                     <Button
                       variant="link"
                       className="absolute right-0 p-2 "
-                      onPress={() => setPrimaryImage(item)}
+                      onPress={() => setPrimaryImage(item.uri)}
                     >
                       <ButtonIcon
                         className={` stroke-yellow-400 ${
-                          primaryImage === item && "fill-yellow-400"
+                          primaryImage === item.uri && "fill-yellow-400"
                         }`}
                         as={Star}
                       />
@@ -163,7 +201,10 @@ const AddProperty = () => {
               label="Category"
               specifics={{
                 type: "select",
-                options: categories,
+                options: categories.map((item) => ({
+                  displayText: item,
+                  value: item,
+                })),
                 placeholder: "Select a category",
                 className: "py-0",
               }}
@@ -177,7 +218,10 @@ const AddProperty = () => {
                 label="Sub Category"
                 specifics={{
                   type: "select",
-                  options: subCategories,
+                  options: subCategories.map((item) => ({
+                    displayText: item.name,
+                    value: item.id,
+                  })),
                   placeholder: "Select a Subcategory",
                   className: "py-0",
                 }}
@@ -206,7 +250,9 @@ const AddProperty = () => {
             )}
           </VStack>
           <Box className="px-4 py-10">
-            <Button>
+            <Button
+              onPress={handleSubmit(addProperty, handleSubmitErrorHandler)}
+            >
               <ButtonText>Add Property</ButtonText>
             </Button>
           </Box>
@@ -232,15 +278,19 @@ const AddProperty = () => {
               <TouchableOpacity
                 className="w-[20vw] aspect-square rounded-lg border border-primary-400"
                 onPress={() =>
-                  pickImage({ useCamera: true }).then((res) => {
-                    if (res) {
-                      setiImages((prev) => {
-                        return [res.uri, ...prev];
-                      });
-                      !primaryImage && setPrimaryImage(res.uri);
+                  pickImage({ useCamera: true, includeBase64: true }).then(
+                    (res) => {
+                      console.log({ res });
+
+                      if (res) {
+                        setiImages((prev) => {
+                          return [res, ...prev];
+                        });
+                        !primaryImage && setPrimaryImage(res.uri);
+                      }
+                      setShowDrawer(false);
                     }
-                    setShowDrawer(false);
-                  })
+                  )
                 }
               >
                 <Center className="w-full h-full">
@@ -252,15 +302,19 @@ const AddProperty = () => {
               <TouchableOpacity
                 className="w-[20vw] aspect-square rounded-lg border border-primary-400"
                 onPress={() =>
-                  pickImage({ useCamera: false }).then((res) => {
-                    if (res) {
-                      setiImages((prev) => {
-                        return [res.uri, ...prev];
-                      });
-                      !primaryImage && setPrimaryImage(res.uri);
+                  pickImage({ useCamera: false, includeBase64: true }).then(
+                    (res) => {
+                      console.log({ res });
+
+                      if (res) {
+                        setiImages((prev) => {
+                          return [res, ...prev];
+                        });
+                        !primaryImage && setPrimaryImage(res.uri);
+                      }
+                      setShowDrawer(false);
                     }
-                    setShowDrawer(false);
-                  })
+                  )
                 }
               >
                 <Center className="w-full h-full">

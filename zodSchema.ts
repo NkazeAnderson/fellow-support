@@ -12,7 +12,7 @@ export const userSchema = createSelectSchema(usersTable,
 )
 
 export const productSchema = createSelectSchema(productsTable,{
-
+    value:(schema)=>schema.nullish()
     })
 
 export const categorySchema = createSelectSchema(productCategoriesTable)

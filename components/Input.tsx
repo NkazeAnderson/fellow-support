@@ -68,7 +68,7 @@ interface SelectInputPropsI
     TextInputProps {
   type: "select";
   className?: string;
-  options: string[];
+  options: { value: string; displayText: string }[];
 }
 const TextInput = ({
   iconLeft,
@@ -106,6 +106,7 @@ const SelectionInput = ({
   options,
   onChangeText,
   className,
+  value,
   ...rest
 }: SelectInputPropsI & controlI) => {
   return (
@@ -121,7 +122,11 @@ const SelectionInput = ({
             <SelectDragIndicator />
           </SelectDragIndicatorWrapper>
           {options.map((item) => (
-            <SelectItem key={item} label={item} value={item} />
+            <SelectItem
+              key={item.value}
+              label={item.displayText}
+              value={item.value}
+            />
           ))}
         </SelectContent>
       </SelectPortal>
