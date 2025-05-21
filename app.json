@@ -38,6 +38,21 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "418308e7-e176-47fb-925e-c51d4b76d8c8"
+      }
+    },
+    "owner": "sea_rocket_tech",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/418308e7-e176-47fb-925e-c51d4b76d8c8"
     }
   }
 }
