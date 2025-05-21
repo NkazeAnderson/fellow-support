@@ -1,6 +1,16 @@
 import { decode } from "base64-arraybuffer";
+import * as FileSystem from 'expo-file-system';
 import { ImagePickerAsset } from "expo-image-picker";
 import { supabase } from "..";
+
+/**
+ * Reads a file from a given URI and returns its base64-encoded string.
+ * @param uri The file URI from Expo ImagePicker.
+ * @returns The base64 string of the file contents.
+ */
+export async function getBase64FromUri(uri: string): Promise<string> {
+    return await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+}
 
 
 /**
@@ -15,19 +25,17 @@ export async function uploadBase64ImageToSupabase(
 
     const userRes = await supabase.auth.getUser()
 
-  if (!asset.base64 || !userRes.data.user?.id) {
+  if ( !userRes.data.user?.id) {
     throw new Error("Base 64 required or unauthenticanted");
     
   }
   const fileName = `${userRes.data.user.id}/${asset.fileName ?? new Date().getTime()}.${asset.mimeType?.split("/")[1]}`
 
-  console.log();
-  
-
+   const base64 = await getBase64FromUri(asset.uri)
     // Upload to Supabase Storage
     const { error } = await supabase.storage
         .from('public-pictures')
-        .upload(fileName, decode(asset.base64), {
+        .upload(fileName, decode(base64), {
             contentType: asset.mimeType,
             upsert: true,
         });

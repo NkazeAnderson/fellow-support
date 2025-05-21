@@ -56,7 +56,8 @@ export const messagesTable = pgTable(tables.messages,{
     id: uuid().primaryKey().defaultRandom().notNull(),
     chat:uuid().references(()=>chatsTable.id).notNull(),
     text: text(),
-    image:text(),
+    images:text().array(),
+    sentBy:uuid().references(()=>usersTable.id).notNull(),
     createdAt: timestamp().defaultNow().notNull()
 })
 

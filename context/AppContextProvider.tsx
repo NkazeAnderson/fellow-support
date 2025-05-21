@@ -11,7 +11,13 @@ import {
 import { tables } from "@/constants";
 import { useUser } from "@/hooks/useUser";
 import { supabase } from "@/supabase";
-import { appConstantsFromDB, populatedProductT } from "@/types";
+import {
+  appConstantsFromDB,
+  populatedChats,
+  populatedProductT,
+  populatedTradesT,
+} from "@/types";
+import { getProperty } from "@/utils/properties";
 import { userT } from "@/zodSchema";
 import { CheckCircle, Info, XCircle } from "lucide-react-native";
 import React, {
@@ -33,6 +39,8 @@ export interface AppContextT {
   constantsFromDB: appConstantsFromDB;
   properties: populatedProductT[];
   myProperties: populatedProductT[];
+  trades: populatedTradesT[];
+  chats: populatedChats[];
 }
 
 export const AppContext = createContext<null | AppContextT>(null);
@@ -75,7 +83,7 @@ const AppContextProvider = (props: PropsWithChildren) => {
 
   const [properties, setProperties] = useState<populatedProductT[]>([]);
   const [myProperties, setMyProperties] = useState<populatedProductT[]>([]);
-  const { user } = useUser();
+  const { user, trades, chats } = useUser();
 
   const constantsFromDB = useRef<appConstantsFromDB>({
     categories: [],
@@ -84,16 +92,13 @@ const AppContextProvider = (props: PropsWithChildren) => {
   const setUpApp = async () => {
     const categoryPromise = supabase.from(tables.category).select();
     const subCategoryPromise = supabase.from(tables.subCategory).select();
-    supabase
-      .from(tables.products)
-      .select("*, subCategory (*) , owner ( firstName, lastName, id)")
-      .then((res) => {
-        if (res.data as populatedProductT[]) {
-          setProperties(res.data!);
-        } else {
-          console.log(res.error);
-        }
-      });
+    getProperty({}).then((res) => {
+      if (res.data as populatedProductT[]) {
+        setProperties(res.data!);
+      } else {
+        console.log(res.error);
+      }
+    });
     const productPromise = supabase.from(tables.products).select().limit(10);
     const myProductsPromise = supabase
       .from(tables.products)
@@ -140,6 +145,8 @@ const AppContextProvider = (props: PropsWithChildren) => {
         constantsFromDB: constantsFromDB.current,
         properties,
         myProperties,
+        trades,
+        chats,
       }}
     >
       {props.children}

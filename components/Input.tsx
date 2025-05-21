@@ -74,6 +74,7 @@ const TextInput = ({
   iconLeft,
   iconRight,
   className,
+  value,
   onChangeText,
   ...rest
 }: TextInputPropsI & controlI) => {
@@ -85,6 +86,7 @@ const TextInput = ({
         </Pressable>
       )}
       <InputField
+        value={value && String(value)}
         {...rest}
         onChangeText={(text) => {
           if (rest.keyboardType && rest.keyboardType.includes("pad")) {
@@ -120,7 +122,10 @@ const SelectionInput = ({
   ...rest
 }: SelectInputPropsI & controlI) => {
   return (
-    <Select onValueChange={onChangeText}>
+    <Select
+      selectedValue={options.find((item) => item.value === value)?.displayText}
+      onValueChange={onChangeText}
+    >
       <SelectTrigger>
         <SelectInput className={`py-0 ${className}`} {...rest} />
         <SelectIcon className="mr-3 ml-auto" as={ChevronDownIcon} />

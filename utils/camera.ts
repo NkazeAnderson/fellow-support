@@ -1,15 +1,13 @@
 import * as ImagePicker from 'expo-image-picker';
 
-type PickImageOptions = {
+export type PickImageOptions = {
     useCamera: boolean;
     includeBase64?:boolean
+    allowMultiple?:boolean
 };
 
-export async function pickImage({ useCamera, includeBase64 }: PickImageOptions): Promise<ImagePicker.ImagePickerAsset | null> {
+export async function pickImage({ useCamera, includeBase64, allowMultiple=true }: PickImageOptions): Promise<ImagePicker.ImagePickerAsset[] | null> {
     let result: ImagePicker.ImagePickerResult;
-
-    console.log({includeBase64});
-    
 
     if (useCamera) {
         // Request camera permissions
@@ -23,6 +21,7 @@ export async function pickImage({ useCamera, includeBase64 }: PickImageOptions):
             allowsEditing: false,
             base64:includeBase64,
             quality: 1,
+            allowsMultipleSelection:allowMultiple
         });
     } else {
         // Request media library permissions
@@ -34,6 +33,7 @@ export async function pickImage({ useCamera, includeBase64 }: PickImageOptions):
             mediaTypes: "images",
             allowsEditing: false,
             quality: 1,
+            allowsMultipleSelection:allowMultiple
         });
     }
 
@@ -41,5 +41,5 @@ export async function pickImage({ useCamera, includeBase64 }: PickImageOptions):
         return null;
     }
 
-    return result.assets[0];
+    return result.assets;
 }

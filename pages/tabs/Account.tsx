@@ -39,6 +39,7 @@ const Account = () => {
       )}
       <Button
         disabled={loggingOut}
+        action="secondary"
         onPress={() => {
           setLoggingOut(true);
           supabase.auth.signOut().then((res) => {

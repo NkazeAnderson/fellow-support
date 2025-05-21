@@ -18,7 +18,9 @@ const PropertyCard = ({ property }: { property: populatedProductT }) => {
     <Pressable
       className="border border-primary-200 rounded-2xl relative"
       onPress={() => {
-        router.push(`/stacks/product/${property.id}`);
+        router.push(
+          `/stacks/product/${property.id}?property=${JSON.stringify(property)}`
+        );
       }}
     >
       {property.value && (

@@ -1,5 +1,3 @@
-import { Grid, GridItem } from "@/components/ui/grid";
-
 import Input from "@/components/Input";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
@@ -8,80 +6,104 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Icon, SearchIcon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
+import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
+import { populatedProductT } from "@/types";
+import { getProperty } from "@/utils/properties";
+import { router } from "expo-router";
 import { ListFilter, MapPin } from "lucide-react-native";
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { View } from "react-native";
+import { FlatList, Pressable, View } from "react-native";
 const Search = () => {
   const {
     control,
-    formState: { errors },
-  } = useForm();
+    formState: { errors, isSubmitting },
+    getValues,
+    handleSubmit,
+  } = useForm<{ searchText: string }>();
+
+  const [searchResults, setSearchResults] = useState<populatedProductT[]>([]);
+
+  const search = async ({ searchText }: { searchText: string }) => {
+    const { data, error } = await getProperty({
+      searchText,
+    });
+
+    data && setSearchResults(data);
+  };
   return (
     <View className="p-4 gap-4">
       <Input
         control={control}
-        name="searchTerm"
+        name="searchText"
         specifics={{
           type: "text",
           placeholder: "Search... ",
           iconRight: {
             icon: SearchIcon,
+            onIconPress: handleSubmit(search),
           },
         }}
+        isDisabled={isSubmitting}
         errors={errors}
       />
 
       <HStack space="2xl" className=" justify-between items-center">
         <Heading>Results</Heading>
         <Heading className=" text-typography-600 capitalize" size="xs">
-          Ceramic Pot
+          {getValues("searchText") ?? ""}
         </Heading>
         <Button className="px-4" variant="link">
           <ButtonIcon as={ListFilter} />
         </Button>
       </HStack>
+      {isSubmitting && <Spinner />}
 
-      <Grid
-        className="gap-2"
-        _extra={{
-          className: "grid-cols-2",
+      <FlatList
+        data={searchResults}
+        renderItem={({ item }) => {
+          return (
+            <Pressable
+              className="w-1/2 p-1"
+              onPress={() => {
+                router.push(`/stacks/product/${item.id}`);
+              }}
+            >
+              <Box className="bg-background-200 relative">
+                <Box className=" aspect-square">
+                  <Image
+                    size="full"
+                    source={{ uri: item.picturesUrl[0] }}
+                    alt="product image"
+                  />
+                </Box>
+                <Box className="p-2 gap-2">
+                  <Heading numberOfLines={2} className=" text-primary-600">
+                    {item.name}
+                  </Heading>
+                  <HStack space="sm">
+                    <Icon className=" text-primary-800" as={MapPin} />
+                    <Text className="text-typography-600" numberOfLines={2}>
+                      {item.location}
+                    </Text>
+                  </HStack>
+                </Box>
+                <Badge
+                  className=" absolute top-2 right-2 z-10"
+                  variant="solid"
+                  action="info"
+                >
+                  <BadgeText>New</BadgeText>
+                </Badge>
+              </Box>
+            </Pressable>
+          );
         }}
-      >
-        <GridItem
-          className="bg-background-200 relative"
-          _extra={{
-            className: "col-span-1",
-          }}
-        >
-          <Box className=" aspect-square">
-            <Image
-              size="full"
-              source={require("@/assets/images/pot.jpg")}
-              alt="product image"
-            />
-          </Box>
-          <Box className="p-2 gap-2">
-            <Heading numberOfLines={2} className=" text-primary-600">
-              Ceramic Pot
-            </Heading>
-            <HStack space="sm">
-              <Icon className=" text-primary-800" as={MapPin} />
-              <Text className="text-typography-600" numberOfLines={2}>
-                San Francisco, LA
-              </Text>
-            </HStack>
-          </Box>
-          <Badge
-            className=" absolute top-2 right-2 z-10"
-            variant="solid"
-            action="info"
-          >
-            <BadgeText>New</BadgeText>
-          </Badge>
-        </GridItem>
-      </Grid>
+        ListEmptyComponent={() => <Text>No results</Text>}
+        numColumns={2}
+        initialNumToRender={10}
+      />
     </View>
   );
 };
