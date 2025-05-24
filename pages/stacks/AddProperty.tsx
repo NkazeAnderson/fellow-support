@@ -165,7 +165,7 @@ const AddProperty = () => {
       <KeyboardAvoidingView
         behavior="padding"
         keyboardVerticalOffset={Platform.OS === "android" ? 80 : 0}
-        className=" flex flex-1 "
+        className=" flex flex-1 bg-primary-0"
       >
         <ScrollView className="flex flex-1 ">
           <VStack space="md" className="p-4">

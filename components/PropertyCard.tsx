@@ -2,7 +2,7 @@ import { populatedProductT } from "@/types";
 import { router } from "expo-router";
 import { MapPin, Share2 } from "lucide-react-native";
 import React from "react";
-import { Pressable } from "react-native";
+import { Pressable, Share } from "react-native";
 import { Avatar, AvatarFallbackText, AvatarImage } from "./ui/avatar";
 import { Badge, BadgeText } from "./ui/badge";
 import { Box } from "./ui/box";
@@ -72,10 +72,18 @@ const PropertyCard = ({ property }: { property: populatedProductT }) => {
 
           <HStack space="md" className=" items-center">
             <Button variant="link">
-              <ButtonIcon as={FavouriteIcon} />
+              <ButtonIcon className="w-6 h-6" as={FavouriteIcon} />
             </Button>
-            <Button variant="link">
-              <ButtonIcon as={Share2} />
+            <Button
+              onPress={(e) => {
+                Share.share({
+                  message: `Check out this product available on Fellow Support bartering platform. https://fellow.support?productid=${property.id}`,
+                });
+                e.stopPropagation();
+              }}
+              variant="link"
+            >
+              <ButtonIcon className="w-6 h-6" as={Share2} />
             </Button>
           </HStack>
         </HStack>

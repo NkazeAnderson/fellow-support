@@ -1,3 +1,4 @@
+import TimeAgo from "@/components/TimeAgo";
 import {
   Avatar,
   AvatarFallbackText,
@@ -52,7 +53,7 @@ const Trades = () => {
                   </Box>
                 </HStack>
 
-                <Text>4 mins ago</Text>
+                <TimeAgo date={item.createdAt} />
               </HStack>
               <HStack className=" relative ">
                 <Box className="flex-1 z-10">

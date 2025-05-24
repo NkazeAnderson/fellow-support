@@ -89,10 +89,10 @@ const SignUp = () => {
 
   return (
     <SafeAreaView className="flex flex-1 bg-primary-50 px-4">
+      <Heading size="2xl" className="text-center text-primary-600 py-10">
+        Sign Up
+      </Heading>
       <ScrollView className="flex flex-1" showsVerticalScrollIndicator={false}>
-        <Heading size="2xl" className="text-center text-primary-600 py-10">
-          Sign Up
-        </Heading>
         <VStack space="md">
           <HStack space="md">
             <Box className="flex-1">

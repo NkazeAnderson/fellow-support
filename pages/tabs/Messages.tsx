@@ -1,3 +1,4 @@
+import TimeAgo from "@/components/TimeAgo";
 import {
   Avatar,
   AvatarBadge,
@@ -44,7 +45,9 @@ const Messages = () => {
                       size="md"
                       className=" capitalize"
                     >{`${item.otherMember.firstName} ${item.otherMember.lastName}`}</Heading>
-                    <Text size="sm">4 mins ago</Text>
+                    <TimeAgo
+                      date={item.messages[item.messages.length - 1].createdAt}
+                    />
                   </HStack>
                   {Boolean(
                     item.messages.length &&

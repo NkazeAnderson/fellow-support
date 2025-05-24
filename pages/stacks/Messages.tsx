@@ -26,7 +26,7 @@ import {
   Send,
   XCircle,
 } from "lucide-react-native";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FlatList, View } from "react-native";
 import { z } from "zod";
@@ -38,6 +38,18 @@ const Messages = () => {
   const { chats, user, trades } = useContext(AppContext) as AppContextT;
   const [showDrawer, setShowDrawer] = useState(false);
   const [images, setImages] = useState<ImagePickerAsset[]>([]);
+  const messagesFlatlistRef = useRef<FlatList | null>(null);
+  const chat = chats.find((item) => item.id === chatId)!;
+
+  useEffect(() => {
+    setTimeout(() => {
+      messagesFlatlistRef &&
+        chat.messages.length &&
+        messagesFlatlistRef.current?.scrollToIndex({
+          index: chat.messages.length - 1,
+        });
+    }, 100);
+  }, [chats]);
 
   const {
     control,
@@ -80,8 +92,6 @@ const Messages = () => {
     }
   };
 
-  const chat = chats.find((item) => item.id === chatId)!;
-
   return (
     <>
       <View className=" p-4 flex flex-1 bg-primary-0 gap-4 relative">
@@ -116,6 +126,15 @@ const Messages = () => {
         <FlatList
           className=" gap-2 flex flex-1"
           showsVerticalScrollIndicator={false}
+          ref={messagesFlatlistRef}
+          onScrollToIndexFailed={(info) => {
+            setTimeout(() => {
+              messagesFlatlistRef.current?.scrollToIndex({
+                index: info.index,
+                animated: true,
+              });
+            }, 500);
+          }}
           data={chat.messages}
           renderItem={({ item }) => {
             return (
@@ -191,6 +210,11 @@ const Messages = () => {
               },
             },
             placeholder: "Text...",
+            returnKeyType: "send",
+            onSubmitEditing: handleSubmit(
+              sendMessage,
+              handleSubmitErrorHandler
+            ),
           }}
           errors={errors}
         />

@@ -28,6 +28,7 @@ import React, {
   useState,
 } from "react";
 
+const DbChannel = supabase.channel(`chat`);
 export interface AppContextT {
   showToast(
     heading: string,
@@ -129,27 +130,37 @@ const AppContextProvider = (props: PropsWithChildren) => {
   };
 
   useEffect(() => {
-    const DbChannel = supabase.channel(`chat`);
     if (user) {
       setUpApp();
-      DbChannel.on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-        },
-        (payload) => {
-          console.log(payload);
-          //@ts-ignore
-          updateStates({ table: payload.table, data: payload.new });
-        }
-      ).subscribe();
     }
+    return () => {};
+  }, [user]);
+
+  useEffect(() => {
+    DbChannel.on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+      },
+      (payload) => {
+        console.log(payload);
+        //@ts-ignore
+        updateStates({ table: payload.table, data: payload.new });
+        if (payload.table === tables.products) {
+          //@ts-ignore
+          getProperty({ id: payload.new?.id as string }).then((res) => {
+            setProperties((prev) => [res.data, ...prev]);
+          });
+        }
+      }
+    ).subscribe();
+
     return () => {
       console.log("Db un sub");
       DbChannel.unsubscribe();
     };
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     console.log("Rendered");

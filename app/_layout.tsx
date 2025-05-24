@@ -13,6 +13,11 @@ import "react-native-reanimated";
 import AppContextProvider from "@/context/AppContextProvider";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import * as Linking from "expo-linking";
+import TimeAgo from "javascript-time-ago";
+
+import en from "javascript-time-ago/locale/en";
+
+TimeAgo.addDefaultLocale(en);
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
