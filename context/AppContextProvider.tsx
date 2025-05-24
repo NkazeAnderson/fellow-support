@@ -83,7 +83,7 @@ const AppContextProvider = (props: PropsWithChildren) => {
 
   const [properties, setProperties] = useState<populatedProductT[]>([]);
   const [myProperties, setMyProperties] = useState<populatedProductT[]>([]);
-  const { user, trades, chats } = useUser();
+  const { user, trades, chats, updateStates } = useUser();
 
   const constantsFromDB = useRef<appConstantsFromDB>({
     categories: [],
@@ -129,9 +129,26 @@ const AppContextProvider = (props: PropsWithChildren) => {
   };
 
   useEffect(() => {
+    const DbChannel = supabase.channel(`chat`);
     if (user) {
       setUpApp();
+      DbChannel.on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+        },
+        (payload) => {
+          console.log(payload);
+          //@ts-ignore
+          updateStates({ table: payload.table, data: payload.new });
+        }
+      ).subscribe();
     }
+    return () => {
+      console.log("Db un sub");
+      DbChannel.unsubscribe();
+    };
   }, [user]);
 
   useEffect(() => {

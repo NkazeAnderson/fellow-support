@@ -12,9 +12,9 @@ import { populatedProductT } from "@/types";
 import { getProperty } from "@/utils/properties";
 import { router } from "expo-router";
 import { ListFilter, MapPin } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { FlatList, Pressable, View } from "react-native";
+import { FlatList, Keyboard, Pressable, View } from "react-native";
 const Search = () => {
   const {
     control,
@@ -25,6 +25,15 @@ const Search = () => {
 
   const [searchResults, setSearchResults] = useState<populatedProductT[]>([]);
 
+  useEffect(() => {
+    Keyboard.addListener("keyboardDidHide", () => {
+      handleSubmit(search);
+    });
+    return () => {
+      Keyboard.removeAllListeners("keyboardDidHide");
+    };
+  }, []);
+
   const search = async ({ searchText }: { searchText: string }) => {
     const { data, error } = await getProperty({
       searchText,
@@ -33,39 +42,75 @@ const Search = () => {
     data && setSearchResults(data);
   };
   return (
-    <View className="p-4 gap-4">
-      <Input
-        control={control}
-        name="searchText"
-        specifics={{
-          type: "text",
-          placeholder: "Search... ",
-          iconRight: {
-            icon: SearchIcon,
-            onIconPress: handleSubmit(search),
-          },
-        }}
-        isDisabled={isSubmitting}
-        errors={errors}
-      />
-
-      <HStack space="2xl" className=" justify-between items-center">
-        <Heading>Results</Heading>
-        <Heading className=" text-typography-600 capitalize" size="xs">
-          {getValues("searchText") ?? ""}
-        </Heading>
-        <Button className="px-4" variant="link">
-          <ButtonIcon as={ListFilter} />
-        </Button>
-      </HStack>
-      {isSubmitting && <Spinner />}
-
+    <View className="p-4 gap-4 flex flex-1 bg-primary-0">
       <FlatList
         data={searchResults}
+        ListHeaderComponent={() => (
+          <>
+            <>
+              <Input
+                control={control}
+                name="searchText"
+                specifics={{
+                  type: "text",
+                  placeholder: "Search... ",
+                  iconRight: {
+                    icon: SearchIcon,
+                    onIconPress: handleSubmit(search),
+                  },
+                  keyboardType: "web-search",
+                  returnKeyType: "search",
+                }}
+                isDisabled={isSubmitting}
+                errors={errors}
+              />
+
+              <HStack space="2xl" className=" justify-between items-center">
+                <Heading>Results</Heading>
+                <Heading className=" text-typography-600 capitalize" size="xs">
+                  {getValues("searchText") ?? ""}
+                </Heading>
+                <Button className="px-4" variant="link">
+                  <ButtonIcon as={ListFilter} />
+                </Button>
+              </HStack>
+              {isSubmitting && <Spinner />}
+            </>
+          </>
+        )}
+        StickyHeaderComponent={() => (
+          <>
+            <Input
+              control={control}
+              name="searchText"
+              specifics={{
+                type: "text",
+                placeholder: "Search... ",
+                iconRight: {
+                  icon: SearchIcon,
+                  onIconPress: handleSubmit(search),
+                },
+              }}
+              isDisabled={isSubmitting}
+              errors={errors}
+            />
+
+            <HStack space="2xl" className=" justify-between items-center">
+              <Heading>Results</Heading>
+              <Heading className=" text-typography-600 capitalize" size="xs">
+                {getValues("searchText") ?? ""}
+              </Heading>
+              <Button className="px-4" variant="link">
+                <ButtonIcon as={ListFilter} />
+              </Button>
+            </HStack>
+            {isSubmitting && <Spinner />}
+          </>
+        )}
         renderItem={({ item }) => {
           return (
             <Pressable
-              className="w-1/2 p-1"
+              className="w-1/2 p-1 items-stretch"
               onPress={() => {
                 router.push(`/stacks/product/${item.id}`);
               }}

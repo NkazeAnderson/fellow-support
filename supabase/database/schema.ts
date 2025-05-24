@@ -11,7 +11,7 @@ export const usersTable = pgTable(tables.users, {
   email: text().notNull().unique(),
   profilePiture: text(),
   favoriteProducts:text().array().default([]).notNull(),
-  subscriptionExpirationDate: date()
+  subscriptionExpirationDate: date({mode:"string"})
 });
 
 export const productCategoriesTable = pgTable(tables.category, {
@@ -33,7 +33,7 @@ export const productsTable = pgTable(tables.products, {
   value:integer(),
   available:boolean().default(true),
   owner:uuid().references(()=>usersTable.id),
-  createdAt:date().defaultNow().notNull(),
+  createdAt:date({mode:"string"}).defaultNow().notNull(),
   subCategory:uuid().notNull().references(()=>productSubCategoriesTable.id), 
   location: text().notNull()
 });
@@ -44,7 +44,7 @@ export const tradesTable = pgTable(tables.trades, {
   product:uuid().references(()=>productsTable.id).notNull(),
   productRequested:uuid().references(()=>productsTable.id).notNull(),
   approvalStatus:tradeApprovals().default("pending").notNull(),
-  createdAt:timestamp().defaultNow().notNull(),
+  createdAt:timestamp({mode:"string"}).defaultNow().notNull(),
 });
 
 export const chatsTable = pgTable(tables.chats,{
@@ -58,7 +58,7 @@ export const messagesTable = pgTable(tables.messages,{
     text: text(),
     images:text().array(),
     sentBy:uuid().references(()=>usersTable.id).notNull(),
-    createdAt: timestamp().defaultNow().notNull()
+    createdAt: timestamp({mode:"string"}).defaultNow().notNull()
 })
 
 
