@@ -51,10 +51,12 @@ const PropertyCard = ({ property }: { property: populatedProductT }) => {
         <HStack space="md" className=" justify-between items-center">
           <HStack space="md" className="items-center">
             <Avatar size={"md"}>
-              <AvatarFallbackText>""</AvatarFallbackText>
+              <AvatarFallbackText>{`${property.owner.firstName.charAt(
+                0
+              )} ${property.owner.lastName.charAt(0)}`}</AvatarFallbackText>
               <AvatarImage
                 source={{
-                  uri: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80",
+                  uri: property.owner.profilePiture ?? undefined,
                 }}
               />
             </Avatar>

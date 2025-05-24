@@ -19,7 +19,7 @@ import { MapPin, MessageCircle, RefreshCcwDot } from "lucide-react-native";
 import React, { useContext } from "react";
 import { FlatList, TouchableOpacity, View } from "react-native";
 const Trades = () => {
-  const { trades } = useContext(AppContext) as AppContextT;
+  const { trades, chats } = useContext(AppContext) as AppContextT;
   return (
     <View className="flex flex-1 bg-primary-0 p-4">
       <FlatList
@@ -109,7 +109,18 @@ const Trades = () => {
                   </Button>
                 </HStack>
 
-                <Button size="sm">
+                <Button
+                  size="sm"
+                  onPress={(e) => {
+                    const chat = chats.find((chat) =>
+                      chat.members.includes(item.requestedBy.id)
+                    );
+                    if (chat) {
+                      router.push(`/stacks/messages?chatId=${chat.id}`);
+                    }
+                    e.stopPropagation();
+                  }}
+                >
                   <ButtonIcon as={MessageCircle} />
                   <ButtonText>Chat</ButtonText>
                 </Button>
