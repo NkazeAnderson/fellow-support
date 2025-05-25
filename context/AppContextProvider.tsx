@@ -19,6 +19,7 @@ import {
 } from "@/types";
 import { getProperty } from "@/utils/properties";
 import { userT } from "@/zodSchema";
+import { REALTIME_SUBSCRIBE_STATES } from "@supabase/supabase-js";
 import { CheckCircle, Info, XCircle } from "lucide-react-native";
 import React, {
   createContext,
@@ -85,6 +86,7 @@ const AppContextProvider = (props: PropsWithChildren) => {
   const [properties, setProperties] = useState<populatedProductT[]>([]);
   const [myProperties, setMyProperties] = useState<populatedProductT[]>([]);
   const { user, trades, chats, updateStates } = useUser();
+  const subscribedToRealTime = useRef(false);
 
   const constantsFromDB = useRef<appConstantsFromDB>({
     categories: [],
@@ -137,28 +139,52 @@ const AppContextProvider = (props: PropsWithChildren) => {
   }, [user]);
 
   useEffect(() => {
-    DbChannel.on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-      },
-      (payload) => {
-        console.log(payload);
-        //@ts-ignore
-        updateStates({ table: payload.table, data: payload.new });
-        if (payload.table === tables.products) {
-          //@ts-ignore
-          getProperty({ id: payload.new?.id as string }).then((res) => {
-            setProperties((prev) => [res.data, ...prev]);
+    try {
+      !subscribedToRealTime.current &&
+        DbChannel.on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+          },
+          (payload) => {
+            console.log(payload);
+            //@ts-ignore
+            updateStates({ table: payload.table, data: payload.new });
+            if (payload.table === tables.products) {
+              //@ts-ignore
+              getProperty({ id: payload.new?.id as string }).then((res) => {
+                if (res.data?.id === user?.id) {
+                  return setMyProperties((prev) => [res.data, ...prev]);
+                }
+                setProperties((prev) => [res.data, ...prev]);
+              });
+            }
+          }
+        ).subscribe((status, err) => {
+          console.log({ status, err });
+
+          if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
+            subscribedToRealTime.current = true;
+          }
+        });
+
+      setInterval(() => {
+        !subscribedToRealTime.current &&
+          DbChannel.subscribe((status, err) => {
+            console.log({ status, err });
+
+            if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
+              subscribedToRealTime.current = true;
+            }
           });
-        }
-      }
-    ).subscribe();
+      }, 10000);
+    } catch (error) {}
 
     return () => {
       console.log("Db un sub");
       DbChannel.unsubscribe();
+      subscribedToRealTime.current = false;
     };
   }, []);
 

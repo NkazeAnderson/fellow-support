@@ -3,7 +3,6 @@ import { router } from "expo-router";
 import { MapPin, Share2 } from "lucide-react-native";
 import React from "react";
 import { Pressable, Share } from "react-native";
-import { Avatar, AvatarFallbackText, AvatarImage } from "./ui/avatar";
 import { Badge, BadgeText } from "./ui/badge";
 import { Box } from "./ui/box";
 import { Button, ButtonIcon } from "./ui/button";
@@ -12,6 +11,7 @@ import { HStack } from "./ui/hstack";
 import { FavouriteIcon, Icon } from "./ui/icon";
 import { Image } from "./ui/image";
 import { Text } from "./ui/text";
+import UserAvatar from "./UserAvatar";
 
 const PropertyCard = ({ property }: { property: populatedProductT }) => {
   return (
@@ -50,16 +50,7 @@ const PropertyCard = ({ property }: { property: populatedProductT }) => {
         </Text>
         <HStack space="md" className=" justify-between items-center">
           <HStack space="md" className="items-center">
-            <Avatar size={"md"}>
-              <AvatarFallbackText>{`${property.owner.firstName.charAt(
-                0
-              )} ${property.owner.lastName.charAt(0)}`}</AvatarFallbackText>
-              <AvatarImage
-                source={{
-                  uri: property.owner.profilePiture ?? undefined,
-                }}
-              />
-            </Avatar>
+            <UserAvatar user={property.owner} />
             <Box className="pt-2">
               <Heading
                 size="sm"

@@ -1,15 +1,10 @@
 import TimeAgo from "@/components/TimeAgo";
-import {
-  Avatar,
-  AvatarBadge,
-  AvatarFallbackText,
-  AvatarImage,
-} from "@/components/ui/avatar";
 
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
+import UserAvatar from "@/components/UserAvatar";
 import { AppContext, AppContextT } from "@/context/AppContextProvider";
 import { router } from "expo-router";
 import React, { useContext } from "react";
@@ -20,7 +15,7 @@ const Messages = () => {
   return (
     <View className="flex flex-1 bg-primary-0">
       <FlatList
-        data={chats}
+        data={chats.filter((item) => item.messages.length)}
         ListEmptyComponent={() => <Text>No messages in here yet</Text>}
         renderItem={({ item }) => {
           return (
@@ -30,15 +25,7 @@ const Messages = () => {
               }}
             >
               <HStack space="md" className=" p-2 border-b border-primary-600">
-                <Avatar size={"md"}>
-                  <AvatarFallbackText>""</AvatarFallbackText>
-                  <AvatarImage
-                    source={{
-                      uri: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80",
-                    }}
-                  />
-                  {isOnline && <AvatarBadge />}
-                </Avatar>
+                <UserAvatar user={item.otherMember} />
                 <Box className="flex-1">
                   <HStack className=" items-center justify-between ">
                     <Heading

@@ -2,12 +2,6 @@ import { Fab, FabIcon, FabLabel } from "@/components/ui/fab";
 
 import Button from "@/components/Button";
 import Input from "@/components/Input";
-import {
-  Avatar,
-  AvatarBadge,
-  AvatarFallbackText,
-  AvatarImage,
-} from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
@@ -25,6 +19,7 @@ import { FavouriteIcon, Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import UserAvatar from "@/components/UserAvatar";
 import { AppContext, AppContextT } from "@/context/AppContextProvider";
 import { populatedProductT } from "@/types";
 import { insertUpdateDeleteChat } from "@/utils/chats";
@@ -175,17 +170,7 @@ const Product = () => {
         <Heading size="md">Posted By</Heading>
 
         <HStack space="md" className=" items-center">
-          <Avatar size={"lg"}>
-            <AvatarFallbackText className=" uppercase">{`${property.owner.firstName.charAt(
-              0
-            )} ${property.owner.lastName.charAt(0)}`}</AvatarFallbackText>
-            <AvatarImage
-              source={{
-                uri: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80",
-              }}
-            />
-            {<AvatarBadge />}
-          </Avatar>
+          <UserAvatar user={property.owner} size="lg" />
           <Box>
             <Heading
               size="sm"

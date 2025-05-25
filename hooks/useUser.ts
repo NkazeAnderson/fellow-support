@@ -7,7 +7,7 @@ import { getUser } from "@/utils/users";
 import { chatSchema, messageSchema, tradeSchema, userT } from "@/zodSchema";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
   const OnlineChannel = supabase.channel("OnlineChannel")
 export function useUser() {
@@ -17,6 +17,8 @@ export function useUser() {
     const [trades, setTrades] = useState<populatedTradesT[]>([])
    
     const [chats, setChats] = useState<populatedChats[]>([])
+    
+    const subscribedToOnline = useRef(false)
    
      useEffect(() => {
     supabase.auth.onAuthStateChange(async (e, session) => {
@@ -73,21 +75,26 @@ export function useUser() {
       })
    
 
-      OnlineChannel
-  .on('presence', { event: 'sync' }, () => {
-    const newState = OnlineChannel.presenceState()
-    console.log('sync', newState)
-  })
-  .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-    console.log('join', key, newPresences)
-  })
-  .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-    console.log('leave', key, leftPresences)
-  })
-  .subscribe()
-  OnlineChannel.track({
-    userId: user.id
-  })
+  //   !subscribedToOnline.current &&  OnlineChannel
+  // .on('presence', { event: 'sync' }, () => {
+  //   const newState = OnlineChannel.presenceState()
+  //   console.log('sync', newState)
+  // })
+  // .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+  //   console.log('join', key, newPresences)
+  // })
+  // .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+  //   console.log('leave', key, leftPresences)
+  // })
+  // .subscribe((status:REALTIME_SUBSCRIBE_STATES)=>{
+  //  if (REALTIME_SUBSCRIBE_STATES.SUBSCRIBED === status) {
+    
+  //    subscribedToOnline.current = true
+  //  }
+  // })
+  // OnlineChannel.track({
+  //   userId: user.id
+  // })
 
     }
 
@@ -118,17 +125,7 @@ export function useUser() {
         break;
 
         case "Messages":
-          console.log("yoo", data);
-          try {
-            
-            const messageInfo = messageSchema.parse(data)
-          } catch (error) {
-            console.log(error);
-            
-          }
           const messageInfo = messageSchema.parse(data)
-          console.log({messageInfo});
-          
           setChats(prev=>prev.map((item)=>{
             if (item.id === messageInfo.chat) {
               item.messages.push(messageInfo)
@@ -140,12 +137,14 @@ export function useUser() {
         case "Trades":
           const tradeInfo = tradeSchema.parse(data)
           const trade = await getTrade({id:tradeInfo.id})
-          if (trades.some(item=>item.id === tradeInfo.id)) {
-          setTrades(prev=>prev.map(item=>item.id === trade.data?.id ? trade.data : item))
-        }
-        else {
-          setTrades([trade.data, ...trades])
-        }
+          
+             setTrades(prev=>{
+            if (prev.some(item=>item.id === trade.data?.id)) {
+              return prev.map(item=>item.id === trade.data?.id ? trade.data : item)
+            }
+            return [trade.data, ...prev]
+          })
+      
         break
     
       default:

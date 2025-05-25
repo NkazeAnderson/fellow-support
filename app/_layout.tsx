@@ -15,9 +15,9 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import * as Linking from "expo-linking";
 import TimeAgo from "javascript-time-ago";
 
+import { supabase } from "@/supabase";
 import en from "javascript-time-ago/locale/en";
-
-TimeAgo.addDefaultLocale(en);
+import { useLayoutEffect } from "react";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -26,6 +26,13 @@ export default function RootLayout() {
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
+  useLayoutEffect(() => {
+    TimeAgo.addDefaultLocale(en);
+
+    return () => {
+      supabase.removeAllChannels();
+    };
+  }, []);
   if (url) {
     console.log(url);
   }

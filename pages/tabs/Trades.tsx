@@ -1,9 +1,4 @@
 import TimeAgo from "@/components/TimeAgo";
-import {
-  Avatar,
-  AvatarFallbackText,
-  AvatarImage,
-} from "@/components/ui/avatar";
 
 import { Box } from "@/components/ui/box";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
@@ -13,18 +8,23 @@ import { Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import UserAvatar from "@/components/UserAvatar";
 import { AppContext, AppContextT } from "@/context/AppContextProvider";
+import { insertUpdateDeleteProperty } from "@/utils/properties";
+import { insertUpdateDeleteTrade } from "@/utils/trades";
 import { router } from "expo-router";
 import { MapPin, MessageCircle, RefreshCcwDot } from "lucide-react-native";
 import React, { useContext } from "react";
 import { FlatList, TouchableOpacity, View } from "react-native";
 const Trades = () => {
-  const { trades, chats } = useContext(AppContext) as AppContextT;
+  const { trades, chats, user } = useContext(AppContext) as AppContextT;
   return (
     <View className="flex flex-1 bg-primary-0 p-4">
       <FlatList
         data={trades}
         renderItem={({ item }) => {
+          const userToDisplay =
+            user?.id === item.requestedBy.id ? item.requestedBy : user;
           return (
             <VStack
               space="md"
@@ -32,16 +32,9 @@ const Trades = () => {
             >
               <HStack className=" justify-between items-center px-2">
                 <HStack space="md" className=" items-center">
-                  <Avatar size={"md"}>
-                    <AvatarFallbackText>""</AvatarFallbackText>
-                    <AvatarImage
-                      source={{
-                        uri: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80",
-                      }}
-                    />
-                  </Avatar>
+                  <UserAvatar user={item.requestedBy} />
                   <Box>
-                    <Heading size="md">
+                    <Heading size="md" className=" capitalize">
                       {item.requestedBy.firstName +
                         " " +
                         item.requestedBy.lastName}
@@ -101,12 +94,42 @@ const Trades = () => {
               </Text>
               <HStack className=" justify-between items-center px-2">
                 <HStack space="sm">
-                  <Button action="negative" size="sm">
-                    <ButtonText>Decline</ButtonText>
-                  </Button>
-                  <Button action="secondary" size="sm">
-                    <ButtonText>Mark as Unavailable</ButtonText>
-                  </Button>
+                  {item.approvalStatus !== "declined" ? (
+                    <Button
+                      action="negative"
+                      size="sm"
+                      onPress={() => {
+                        insertUpdateDeleteTrade(
+                          { id: item.id, approvalStatus: "declined" },
+                          "update"
+                        );
+                      }}
+                    >
+                      <ButtonText>Decline</ButtonText>
+                    </Button>
+                  ) : (
+                    <Heading size="xs" className="text-red-600">
+                      Declined
+                    </Heading>
+                  )}
+                  {item.productRequested.available ? (
+                    <Button
+                      action="secondary"
+                      size="sm"
+                      onPress={() => {
+                        insertUpdateDeleteProperty(
+                          { id: item.id, available: false },
+                          "update"
+                        );
+                      }}
+                    >
+                      <ButtonText>Mark as Unavailable</ButtonText>
+                    </Button>
+                  ) : (
+                    <Heading size="xs" className="text-gray-600">
+                      Unavailable
+                    </Heading>
+                  )}
                 </HStack>
 
                 <Button

@@ -1,10 +1,5 @@
 import ImagePickerDrawerContent from "@/components/ImagePickerDrawerContent";
 import Input from "@/components/Input";
-import {
-  Avatar,
-  AvatarFallbackText,
-  AvatarImage,
-} from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Button, ButtonIcon } from "@/components/ui/button";
 import { Drawer, DrawerBackdrop } from "@/components/ui/drawer";
@@ -12,6 +7,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
+import UserAvatar from "@/components/UserAvatar";
 import { AppContext, AppContextT } from "@/context/AppContextProvider";
 import { uploadBase64ImageToSupabase } from "@/supabase/media";
 import { handleSubmitErrorHandler } from "@/utils";
@@ -97,14 +93,7 @@ const Messages = () => {
       <View className=" p-4 flex flex-1 bg-primary-0 gap-4 relative">
         <HStack space="md" className=" justify-between items-center">
           <HStack space="md" className="items-center">
-            <Avatar size={"md"}>
-              <AvatarFallbackText>""</AvatarFallbackText>
-              <AvatarImage
-                source={{
-                  uri: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80",
-                }}
-              />
-            </Avatar>
+            <UserAvatar user={chat.otherMember} />
             <Box className="pt-2">
               <Heading
                 size="sm"

@@ -1,15 +1,11 @@
 import ImagePickerDrawerContent from "@/components/ImagePickerDrawerContent";
-import {
-  Avatar,
-  AvatarFallbackText,
-  AvatarImage,
-} from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
 import { Drawer, DrawerBackdrop } from "@/components/ui/drawer";
 import { Heading } from "@/components/ui/heading";
+import UserAvatar from "@/components/UserAvatar";
 import { AppContext, AppContextT } from "@/context/AppContextProvider";
 import { supabase } from "@/supabase";
 import { uploadBase64ImageToSupabase } from "@/supabase/media";
@@ -30,18 +26,7 @@ const Account = () => {
           <>
             <Center>
               <Box className="relative">
-                <Avatar size={"lg"}>
-                  <AvatarFallbackText className=" uppercase">{`${user.firstName.charAt(
-                    0
-                  )} ${user.lastName.charAt(0)}`}</AvatarFallbackText>
-                  <AvatarImage
-                    source={{
-                      uri: image?.uri
-                        ? image.uri
-                        : user.profilePiture ?? undefined,
-                    }}
-                  />
-                </Avatar>
+                <UserAvatar user={user} />
                 <Box className="absolute bottom-0 -right-14">
                   <Button
                     variant="link"

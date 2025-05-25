@@ -1,13 +1,10 @@
 import Logo from "@/components/Logo";
-import {
-  Avatar,
-  AvatarFallbackText,
-  AvatarImage,
-} from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Button, ButtonIcon } from "@/components/ui/button";
 import { HStack } from "@/components/ui/hstack";
 import { Icon } from "@/components/ui/icon";
+import UserAvatar from "@/components/UserAvatar";
+import { AppContext, AppContextT } from "@/context/AppContextProvider";
 
 import { Link, Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -20,8 +17,9 @@ import {
   Search,
   UserCircle,
 } from "lucide-react-native";
-import React from "react";
+import React, { useContext } from "react";
 const _layout = () => {
+  const { user } = useContext(AppContext) as AppContextT;
   return (
     <>
       <Tabs
@@ -60,14 +58,11 @@ const _layout = () => {
                 <Button variant="link">
                   <ButtonIcon as={Bell} />
                 </Button>
-                <Avatar size={"md"}>
-                  <AvatarFallbackText>""</AvatarFallbackText>
-                  <AvatarImage
-                    source={{
-                      uri: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80",
-                    }}
-                  />
-                </Avatar>
+                {user && (
+                  <Link href={"/tabs/account"}>
+                    <UserAvatar user={user} />
+                  </Link>
+                )}
               </HStack>
             ),
 
