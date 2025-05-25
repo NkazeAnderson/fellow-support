@@ -9,12 +9,13 @@ import { Image } from "@/components/ui/image";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { populatedProductT } from "@/types";
+import { handleSubmitErrorHandler } from "@/utils";
 import { getProperty } from "@/utils/properties";
 import { router } from "expo-router";
 import { ListFilter, MapPin } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { FlatList, Keyboard, Pressable, View } from "react-native";
+import { FlatList, Pressable, View } from "react-native";
 const Search = () => {
   const {
     control,
@@ -24,15 +25,6 @@ const Search = () => {
   } = useForm<{ searchText: string }>();
 
   const [searchResults, setSearchResults] = useState<populatedProductT[]>([]);
-
-  useEffect(() => {
-    Keyboard.addListener("keyboardDidHide", () => {
-      handleSubmit(search);
-    });
-    return () => {
-      Keyboard.removeAllListeners("keyboardDidHide");
-    };
-  }, []);
 
   const search = async ({ searchText }: { searchText: string }) => {
     const { data, error } = await getProperty({
@@ -60,6 +52,10 @@ const Search = () => {
                   },
                   keyboardType: "web-search",
                   returnKeyType: "search",
+                  onSubmitEditing: handleSubmit(
+                    search,
+                    handleSubmitErrorHandler
+                  ),
                 }}
                 isDisabled={isSubmitting}
                 errors={errors}
@@ -76,35 +72,6 @@ const Search = () => {
               </HStack>
               {isSubmitting && <Spinner />}
             </>
-          </>
-        )}
-        StickyHeaderComponent={() => (
-          <>
-            <Input
-              control={control}
-              name="searchText"
-              specifics={{
-                type: "text",
-                placeholder: "Search... ",
-                iconRight: {
-                  icon: SearchIcon,
-                  onIconPress: handleSubmit(search),
-                },
-              }}
-              isDisabled={isSubmitting}
-              errors={errors}
-            />
-
-            <HStack space="2xl" className=" justify-between items-center">
-              <Heading>Results</Heading>
-              <Heading className=" text-typography-600 capitalize" size="xs">
-                {getValues("searchText") ?? ""}
-              </Heading>
-              <Button className="px-4" variant="link">
-                <ButtonIcon as={ListFilter} />
-              </Button>
-            </HStack>
-            {isSubmitting && <Spinner />}
           </>
         )}
         renderItem={({ item }) => {

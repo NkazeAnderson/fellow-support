@@ -26,7 +26,7 @@ const Account = () => {
           <>
             <Center>
               <Box className="relative">
-                <UserAvatar user={user} />
+                <UserAvatar user={user} size="xl" />
                 <Box className="absolute bottom-0 -right-14">
                   <Button
                     variant="link"

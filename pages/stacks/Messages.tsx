@@ -1,17 +1,20 @@
 import ImagePickerDrawerContent from "@/components/ImagePickerDrawerContent";
 import Input from "@/components/Input";
 import { Box } from "@/components/ui/box";
-import { Button, ButtonIcon } from "@/components/ui/button";
-import { Drawer, DrawerBackdrop } from "@/components/ui/drawer";
+import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
+import { Divider } from "@/components/ui/divider";
+import { Drawer, DrawerBackdrop, DrawerContent } from "@/components/ui/drawer";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
 import UserAvatar from "@/components/UserAvatar";
 import { AppContext, AppContextT } from "@/context/AppContextProvider";
 import { uploadBase64ImageToSupabase } from "@/supabase/media";
 import { handleSubmitErrorHandler } from "@/utils";
 import { insertUpdateDeleteMessage } from "@/utils/chats";
+import { insertUpdateDeleteTrade } from "@/utils/trades";
 import { messageSchema } from "@/zodSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImagePickerAsset } from "expo-image-picker";
@@ -24,18 +27,21 @@ import {
 } from "lucide-react-native";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { FlatList, View } from "react-native";
+import { FlatList, ScrollView, View } from "react-native";
 import { z } from "zod";
 
 const schema = messageSchema.omit({ id: true, createdAt: true });
 
 const Messages = () => {
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
-  const { chats, user, trades } = useContext(AppContext) as AppContextT;
+  const { chats, user, trades, showToast } = useContext(
+    AppContext
+  ) as AppContextT;
   const [showDrawer, setShowDrawer] = useState(false);
   const [images, setImages] = useState<ImagePickerAsset[]>([]);
   const messagesFlatlistRef = useRef<FlatList | null>(null);
   const chat = chats.find((item) => item.id === chatId)!;
+  const [showTrades, setShowTrades] = useState(false);
 
   useEffect(() => {
     setTimeout(() => {
@@ -144,6 +150,7 @@ const Messages = () => {
                       <Text className=" text-typography-600">{item.text}</Text>
                     )}
                     {Boolean(item.images?.length) &&
+                      //@ts-ignore
                       item.images?.map((uri, index) => (
                         <Box key={index} className="aspect-square p-2">
                           <Image
@@ -182,7 +189,26 @@ const Messages = () => {
             )}
             horizontal
           />
+          <FlatList
+            data={[""]}
+            renderItem={({ item }) => (
+              <Box className=" relative mr-2">
+                <Button
+                  size="sm"
+                  action="positive"
+                  onPress={() => {
+                    setShowTrades(true);
+                    setShowDrawer(true);
+                  }}
+                >
+                  <ButtonText>Show Pending Trades</ButtonText>
+                </Button>
+              </Box>
+            )}
+            horizontal
+          />
         </Box>
+
         <Input
           control={control}
           name="text"
@@ -212,19 +238,104 @@ const Messages = () => {
         isOpen={showDrawer}
         onClose={() => {
           setShowDrawer(false);
+          setShowTrades(false);
         }}
         size="sm"
         anchor="bottom"
       >
         <DrawerBackdrop />
-        <ImagePickerDrawerContent
-          callback={(res) => {
-            if (res) {
-              setImages((prev) => (prev ? [...res, ...prev] : [...res]));
-            }
-            setShowDrawer(false);
-          }}
-        />
+        {showTrades ? (
+          <DrawerContent className="h-[60vh] rounded-t-lg bg-primary-50">
+            <ScrollView>
+              {trades
+                .filter((item) => item.approvalStatus === "pending")
+                .map((item) => (
+                  <HStack
+                    key={item.id}
+                    space="lg"
+                    className=" items-center my-4 "
+                  >
+                    <VStack space="sm" className="flex-1">
+                      <HStack space="sm" className=" items-end">
+                        <Image
+                          size="xs"
+                          source={{ uri: item.product.picturesUrl[0] }}
+                          alt="image pic"
+                          borderRadius={10}
+                        />
+                        <Heading
+                          size="sm"
+                          className="text-primary-600 italic capitalize"
+                        >{`${item.product.name} `}</Heading>
+                      </HStack>
+                      <Divider />
+                      <HStack space="sm" className=" items-start">
+                        <Image
+                          size="xs"
+                          source={{ uri: item.productRequested.picturesUrl[0] }}
+                          alt="image pic"
+                          borderRadius={10}
+                        />
+                        <Heading
+                          size="sm"
+                          className="text-primary-600 italic capitalize "
+                        >{`${item.productRequested.name} `}</Heading>
+                      </HStack>
+                    </VStack>
+                    <VStack space="md">
+                      <Button
+                        size="sm"
+                        action="positive"
+                        onPress={() => {
+                          insertUpdateDeleteTrade(
+                            { id: item.id, approvalStatus: "accepted" },
+                            "update"
+                          ).then(() => {
+                            setShowDrawer(false);
+                            showToast(
+                              "Accepted",
+                              `You accepted a trade with ${item.requestedBy.firstName}`,
+                              "success"
+                            );
+                          });
+                        }}
+                      >
+                        <ButtonText>Accept</ButtonText>
+                      </Button>
+                      <Divider />
+                      <Button
+                        size="sm"
+                        action="negative"
+                        onPress={() => {
+                          insertUpdateDeleteTrade(
+                            { id: item.id, approvalStatus: "declined" },
+                            "update"
+                          ).then(() => {
+                            setShowDrawer(false);
+                            showToast(
+                              "Declined",
+                              `You declined a trade with ${item.requestedBy.firstName}`
+                            );
+                          });
+                        }}
+                      >
+                        <ButtonText>Decline</ButtonText>
+                      </Button>
+                    </VStack>
+                  </HStack>
+                ))}
+            </ScrollView>
+          </DrawerContent>
+        ) : (
+          <ImagePickerDrawerContent
+            callback={(res) => {
+              if (res) {
+                setImages((prev) => (prev ? [...res, ...prev] : [...res]));
+              }
+              setShowDrawer(false);
+            }}
+          />
+        )}
       </Drawer>
     </>
   );

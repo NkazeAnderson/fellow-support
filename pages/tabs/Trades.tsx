@@ -94,7 +94,15 @@ const Trades = () => {
               </Text>
               <HStack className=" justify-between items-center px-2">
                 <HStack space="sm">
-                  {item.approvalStatus !== "declined" ? (
+                  {item.approvalStatus === "accepted" ? (
+                    <Heading size="xs" className="text-green-600">
+                      Accepted
+                    </Heading>
+                  ) : item.approvalStatus === "declined" ? (
+                    <Heading size="xs" className="text-red-600">
+                      Declined
+                    </Heading>
+                  ) : (
                     <Button
                       action="negative"
                       size="sm"
@@ -107,12 +115,9 @@ const Trades = () => {
                     >
                       <ButtonText>Decline</ButtonText>
                     </Button>
-                  ) : (
-                    <Heading size="xs" className="text-red-600">
-                      Declined
-                    </Heading>
                   )}
-                  {item.productRequested.available ? (
+                  {item.productRequested.available &&
+                  item.approvalStatus === "pending" ? (
                     <Button
                       action="secondary"
                       size="sm"
@@ -125,10 +130,12 @@ const Trades = () => {
                     >
                       <ButtonText>Mark as Unavailable</ButtonText>
                     </Button>
-                  ) : (
+                  ) : !item.productRequested.available ? (
                     <Heading size="xs" className="text-gray-600">
                       Unavailable
                     </Heading>
+                  ) : (
+                    <></>
                   )}
                 </HStack>
 
