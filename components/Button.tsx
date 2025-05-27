@@ -4,13 +4,14 @@ import { ButtonSpinner, Button as GlueButton } from "./ui/button";
 const Button = ({
   children,
   isSubmitting,
+  isDisabled,
   ...rest
 }: Required<PropsWithChildren> &
   React.ComponentPropsWithRef<typeof GlueButton> & {
     isSubmitting?: boolean;
   }) => {
   return (
-    <GlueButton {...rest}>
+    <GlueButton isDisabled={isDisabled || isSubmitting} {...rest}>
       {isSubmitting && <ButtonSpinner />}
       {children}
     </GlueButton>

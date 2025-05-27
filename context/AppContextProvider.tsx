@@ -43,7 +43,10 @@ export interface AppContextT {
   myProperties: populatedProductT[];
   trades: populatedTradesT[];
   chats: populatedChats[];
+  handleSupabaseResErrors<T extends supabaseResT<D>, D = T["data"]>(obj: T): D;
 }
+
+type supabaseResT<T> = { error: unknown; data: T };
 
 export const AppContext = createContext<null | AppContextT>(null);
 
@@ -188,6 +191,32 @@ const AppContextProvider = (props: PropsWithChildren) => {
     };
   }, []);
 
+  const handleSupabaseResErrors: AppContextT["handleSupabaseResErrors"] = (
+    res
+  ) => {
+    if (res.error) {
+      console.error({ err: res.error });
+
+      switch (typeof res.error) {
+        case "object":
+          if ("message" in res.error) {
+            showToast(
+              "Error",
+              typeof res.error.message == "string"
+                ? res.error.message
+                : "There was an error with your request",
+              "error"
+            );
+          }
+          break;
+
+        default:
+          break;
+      }
+    }
+    return res.data;
+  };
+
   useEffect(() => {
     console.log("Rendered");
   });
@@ -201,6 +230,7 @@ const AppContextProvider = (props: PropsWithChildren) => {
         myProperties,
         trades,
         chats,
+        handleSupabaseResErrors,
       }}
     >
       {props.children}

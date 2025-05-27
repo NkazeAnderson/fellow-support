@@ -5,12 +5,12 @@ import { boolean, date, integer, pgEnum, pgTable, pgView, text, timestamp, uuid 
 export const tradeApprovals = pgEnum("tradeApprovals", ["pending", "accepted", 'declined'])
 
 export const usersTable = pgTable(tables.users, {
-  id: uuid().primaryKey().defaultRandom().notNull(),
+  id: uuid().primaryKey().notNull(),
   firstName: text().notNull(),
   lastName: text().notNull(),
   email: text().notNull().unique(),
   profilePiture: text(),
-  favoriteProducts:text().array().default([]).notNull(),
+  favoriteProducts:uuid().array(),
   subscriptionExpirationDate: date({mode:"string"})
 });
 

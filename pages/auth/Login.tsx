@@ -1,5 +1,6 @@
-import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
+import { ButtonText } from "@/components/ui/button";
 
+import Button from "@/components/Button";
 import Input from "@/components/Input";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
@@ -9,12 +10,14 @@ import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { AppContext, AppContextT } from "@/context/AppContextProvider";
 import { supabase } from "@/supabase";
+import { handleAppErrors, handleSubmitErrorHandler } from "@/utils";
 import { userSchema } from "@/zodSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "expo-router";
 import { Eye, EyeOffIcon, Lock, Mail } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
 import { ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -31,11 +34,13 @@ const Login = () => {
     handleSubmit,
   } = useForm({ resolver: zodResolver(schema) });
 
+  const { handleSupabaseResErrors } = useContext(AppContext) as AppContextT;
+
   const login = async ({ email, password }: z.infer<typeof schema>) => {
-    try {
-      const res = await supabase.auth.signInWithPassword({ email, password });
-    } catch (error) {}
+    const res = await supabase.auth.signInWithPassword({ email, password });
+    handleSupabaseResErrors(res);
   };
+
   return (
     <SafeAreaView className="flex flex-1 bg-primary-50 px-4">
       <Heading size="2xl" className="text-center text-primary-600 py-10">
@@ -79,10 +84,12 @@ const Login = () => {
             action={"primary"}
             variant={"solid"}
             size={"lg"}
-            isDisabled={isSubmitting}
-            onPress={handleSubmit(login)}
+            isSubmitting={isSubmitting}
+            onPress={handleSubmit(
+              handleAppErrors(login),
+              handleSubmitErrorHandler
+            )}
           >
-            {isSubmitting && <ButtonSpinner />}
             <ButtonText>Log In</ButtonText>
           </Button>
         </Box>
@@ -119,7 +126,10 @@ const Login = () => {
             </Button>
           </VStack>
         </VStack>
-        <VStack space="xl" className=" flex-1 pb-10 justify-end items-center">
+        <VStack
+          space="xl"
+          className=" flex-1 pt-4 pb-10 justify-end items-center"
+        >
           <Text>
             Don't have an account?{" "}
             <Link href="/signup" className="text-primary-600">

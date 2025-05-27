@@ -7,7 +7,8 @@ export const userSchema = createSelectSchema(usersTable,
         email:(schema)=>schema.email().toLowerCase().trim(),
         firstName:(schema)=>schema.toLowerCase().trim(),
         lastName:(schema)=>schema.toLowerCase().trim(),
-        subscriptionExpirationDate:(schema)=>schema.nullish()
+        subscriptionExpirationDate:(schema)=>schema.nullish(),
+        favoriteProducts:(schema)=>schema.nullish()
     }
 )
 

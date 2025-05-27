@@ -1,5 +1,6 @@
-import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
+import { ButtonText } from "@/components/ui/button";
 
+import Button from "@/components/Button";
 import Input from "@/components/Input";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
@@ -10,13 +11,12 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { tables } from "@/constants";
 import { AppContext, AppContextT } from "@/context/AppContextProvider";
 import { supabase } from "@/supabase";
-import { handleSubmitErrorHandler } from "@/utils";
+import { handleAppErrors, handleSubmitErrorHandler } from "@/utils";
 import { userSchema } from "@/zodSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, router } from "expo-router";
+import { Link } from "expo-router";
 import { Eye, EyeOffIcon, Lock, Mail } from "lucide-react-native";
 import React, { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -37,54 +37,56 @@ const SignUp = () => {
     resolver: zodResolver(schema),
   });
   const toast = useToast();
-  const appcontext = useContext(AppContext) as AppContextT;
+  const { showToast, handleSupabaseResErrors } = useContext(
+    AppContext
+  ) as AppContextT;
 
   const signUp = async (data: z.infer<typeof schema>) => {
     const { email, password, firstName, lastName } = data;
-    try {
-      const userCount = await supabase
-        .from(tables.users)
-        .select()
-        .eq("email", email.trim());
-      console.log(userCount);
 
-      if (!userCount.data?.length) {
-        const userInfo = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: "fellowsupport://login/",
-          },
-        });
-        console.log(userInfo);
+    // const userCount = await supabase
+    //   .from(tables.users)
+    //   .select()
+    //   .eq("email", email.trim());
+    // console.log(userCount);
 
-        if (!userInfo.error) {
-          appcontext.showToast(
-            "Email Sent",
-            "Validate your email to complete sign up",
-            "success"
-          );
-          await supabase
-            .from(tables.users)
-            .insert({ id: userInfo.data.user?.id, email, firstName, lastName });
-        } else {
-          appcontext.showToast(
-            "Error Signing You Up",
-            "We are unable to sign you up at this time",
-            "error"
-          );
-        }
-      } else {
-        appcontext.showToast(
-          "Account Already Exist",
-          "Already createdan account using this email",
-          undefined,
-          () => router.push("/login")
-        );
+    const res = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { firstName, lastName },
+      },
+    });
+    const { user } = handleSupabaseResErrors(res);
+    if (!user) return;
+
+    let message: string;
+    let heading: string;
+    if (
+      new Date(user.created_at).getTime() + 10 * 1000 >
+      new Date().getTime()
+    ) {
+      //newly created account
+      message = "Successfully signed up. Please validate your email address";
+      heading = "Success";
+    } else if (!user.user_metadata.email_verified) {
+      message = "Please valid your email address";
+      heading = "Unverified email address";
+      if (!user.confirmation_sent_at) {
+        return;
       }
-    } catch (error) {
-      console.log({ error });
+      if (
+        new Date(user.confirmation_sent_at).getTime() + 1 * 60 * 60 * 1000 >
+        new Date().getTime()
+      ) {
+        console.log("sending email again");
+        supabase.auth.resend({ email: data.email, type: "signup" });
+      }
+    } else {
+      message = "Can't serve you at this time";
+      heading = "Sorry";
     }
+    showToast(heading, message, "success");
   };
 
   return (
@@ -156,10 +158,12 @@ const SignUp = () => {
             action={"primary"}
             variant={"solid"}
             size={"lg"}
-            isDisabled={isSubmitting}
-            onPress={handleSubmit(signUp, handleSubmitErrorHandler)}
+            isSubmitting={isSubmitting}
+            onPress={handleSubmit(
+              handleAppErrors(signUp),
+              handleSubmitErrorHandler
+            )}
           >
-            {isSubmitting && <ButtonSpinner />}
             <ButtonText>Sign Up</ButtonText>
           </Button>
         </Box>
