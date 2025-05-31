@@ -18,13 +18,16 @@ import React, { useContext } from "react";
 import { FlatList, TouchableOpacity, View } from "react-native";
 const Trades = () => {
   const { trades, chats, user } = useContext(AppContext) as AppContextT;
+
   return (
     <View className="flex flex-1 bg-primary-0 p-4">
       <FlatList
         data={trades}
         renderItem={({ item }) => {
           const userToDisplay =
-            user?.id === item.requestedBy.id ? item.requestedBy : user;
+            user?.id === item.requestedBy
+              ? item.productRequested.owner
+              : item.product.owner;
           return (
             <VStack
               space="md"
@@ -32,12 +35,10 @@ const Trades = () => {
             >
               <HStack className=" justify-between items-center px-2">
                 <HStack space="md" className=" items-center">
-                  <UserAvatar user={item.requestedBy} />
+                  <UserAvatar user={userToDisplay} />
                   <Box>
                     <Heading size="md" className=" capitalize">
-                      {item.requestedBy.firstName +
-                        " " +
-                        item.requestedBy.lastName}
+                      {userToDisplay.firstName + " " + userToDisplay.lastName}
                     </Heading>
                     <HStack>
                       <Icon as={MapPin} />
@@ -102,6 +103,10 @@ const Trades = () => {
                     <Heading size="xs" className="text-red-600">
                       Declined
                     </Heading>
+                  ) : item.requestedBy === user?.id ? (
+                    <Heading size="xs" className="text-primary-600">
+                      {item.approvalStatus}
+                    </Heading>
                   ) : (
                     <Button
                       action="negative"
@@ -116,7 +121,8 @@ const Trades = () => {
                       <ButtonText>Decline</ButtonText>
                     </Button>
                   )}
-                  {item.productRequested.available &&
+                  {item.requestedBy !== user?.id &&
+                  item.productRequested.available &&
                   item.approvalStatus === "pending" ? (
                     <Button
                       action="secondary"
@@ -130,7 +136,8 @@ const Trades = () => {
                     >
                       <ButtonText>Mark as Unavailable</ButtonText>
                     </Button>
-                  ) : !item.productRequested.available ? (
+                  ) : !item.productRequested.available &&
+                    item.requestedBy !== user?.id ? (
                     <Heading size="xs" className="text-gray-600">
                       Unavailable
                     </Heading>
@@ -142,12 +149,10 @@ const Trades = () => {
                 <Button
                   size="sm"
                   onPress={(e) => {
-                    const chat = chats.find((chat) =>
-                      chat.members.includes(item.requestedBy.id)
+                    router.push(
+                      `/stacks/messages?member=${JSON.stringify(userToDisplay)}`
                     );
-                    if (chat) {
-                      router.push(`/stacks/messages?chatId=${chat.id}`);
-                    }
+
                     e.stopPropagation();
                   }}
                 >

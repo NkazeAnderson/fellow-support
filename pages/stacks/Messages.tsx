@@ -13,9 +13,13 @@ import UserAvatar from "@/components/UserAvatar";
 import { AppContext, AppContextT } from "@/context/AppContextProvider";
 import { uploadBase64ImageToSupabase } from "@/supabase/media";
 import { handleSubmitErrorHandler } from "@/utils";
-import { insertUpdateDeleteMessage } from "@/utils/chats";
+import {
+  getSpecificChat,
+  insertUpdateDeleteChat,
+  insertUpdateDeleteMessage,
+} from "@/utils/chats";
 import { insertUpdateDeleteTrade } from "@/utils/trades";
-import { messageSchema } from "@/zodSchema";
+import { messageSchema, publicUserSchema } from "@/zodSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImagePickerAsset } from "expo-image-picker";
 import { useLocalSearchParams } from "expo-router";
@@ -27,25 +31,36 @@ import {
 } from "lucide-react-native";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { FlatList, ScrollView, View } from "react-native";
+import { FlatList, KeyboardAvoidingView, ScrollView, View } from "react-native";
 import { z } from "zod";
 
-const schema = messageSchema.omit({ id: true, createdAt: true });
+const schema = messageSchema.omit({
+  id: true,
+  createdAt: true,
+  sentBy: true,
+  chat: true,
+});
 
 const Messages = () => {
-  const { chatId } = useLocalSearchParams<{ chatId: string }>();
+  const { member } = useLocalSearchParams<{ member: string }>();
+  const otherMember = publicUserSchema.parse(JSON.parse(member));
   const { chats, user, trades, showToast } = useContext(
     AppContext
   ) as AppContextT;
   const [showDrawer, setShowDrawer] = useState(false);
   const [images, setImages] = useState<ImagePickerAsset[]>([]);
   const messagesFlatlistRef = useRef<FlatList | null>(null);
-  const chat = chats.find((item) => item.id === chatId)!;
+  let chat = chats.find(
+    (item) =>
+      item.member1.id === otherMember.id || item.member2.id === otherMember.id
+  );
   const [showTrades, setShowTrades] = useState(false);
+  console.log({ chat });
 
   useEffect(() => {
     setTimeout(() => {
       messagesFlatlistRef &&
+        chat &&
         chat.messages.length &&
         messagesFlatlistRef.current?.scrollToIndex({
           index: chat.messages.length - 1,
@@ -62,14 +77,28 @@ const Messages = () => {
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      chat: chatId,
-      sentBy: user?.id,
       images: [],
       text: "",
     },
   });
 
   const sendMessage = async (data: Partial<z.infer<typeof schema>>) => {
+    if (!chat) {
+      // check from db again before insert
+      console.log({ member1: user?.id, member2: otherMember.id });
+
+      insertUpdateDeleteChat(
+        { member1: user?.id, member2: otherMember.id },
+        "insert"
+      )
+        .then((res) => {
+          console.log(res);
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+    }
+
     const remotePaths: string[] = [];
     if (!images.length) {
       delete data.images;
@@ -86,7 +115,14 @@ const Messages = () => {
     if (!data.text && !data.images?.length) {
       return;
     }
-    const res = await insertUpdateDeleteMessage(data, "insert");
+    if (!chat) {
+      chat = (await getSpecificChat(user?.id!, otherMember.id)).data;
+    }
+    const res = await insertUpdateDeleteMessage(
+      { ...data, chat: chat?.id, sentBy: user?.id },
+      "insert"
+    );
+
     if (!res.error) {
       setValue("text", "");
       setValue("images", []);
@@ -96,144 +132,151 @@ const Messages = () => {
 
   return (
     <>
-      <View className=" p-4 flex flex-1 bg-primary-0 gap-4 relative">
-        <HStack space="md" className=" justify-between items-center">
-          <HStack space="md" className="items-center">
-            <UserAvatar user={chat.otherMember} />
-            <Box className="pt-2">
-              <Heading
-                size="sm"
-                className="capitalize"
-              >{`${chat.otherMember.firstName} ${chat.otherMember.lastName}`}</Heading>
-              <HStack space="xs" className=" items-center">
-                <Box className="w-1 h-1 rounded-full bg-green-600"></Box>
-                <Text size="xs">Online</Text>
-              </HStack>
-            </Box>
-          </HStack>
-
-          <HStack space="md" className=" items-center">
-            <Button variant="link">
-              <ButtonIcon as={EllipsisVertical} />
-            </Button>
-          </HStack>
-        </HStack>
-        <FlatList
-          className=" gap-2 flex flex-1"
-          showsVerticalScrollIndicator={false}
-          ref={messagesFlatlistRef}
-          onScrollToIndexFailed={(info) => {
-            setTimeout(() => {
-              messagesFlatlistRef.current?.scrollToIndex({
-                index: info.index,
-                animated: true,
-              });
-            }, 500);
-          }}
-          data={chat.messages}
-          renderItem={({ item }) => {
-            return (
-              <>
-                <HStack
-                  className={` mb-4 ${
-                    item.sentBy === user?.id && "justify-end"
-                  }`}
-                >
-                  <Box
-                    className={
-                      item.sentBy === user?.id
-                        ? "w-11/12 bg-gray-100 p-2 rounded-md"
-                        : "w-11/12 bg-primary-100 p-2 rounded-md"
-                    }
-                  >
-                    {Boolean(item.text) && (
-                      <Text className=" text-typography-600">{item.text}</Text>
-                    )}
-                    {Boolean(item.images?.length) &&
-                      //@ts-ignore
-                      item.images?.map((uri, index) => (
-                        <Box key={index} className="aspect-square p-2">
-                          <Image
-                            size="full"
-                            source={{ uri }}
-                            className="rounded-md"
-                            alt="image in message"
-                          />
-                        </Box>
-                      ))}
-                  </Box>
+      <KeyboardAvoidingView className="flex-1 " behavior="padding">
+        <View className=" p-4 flex flex-1 bg-primary-0 gap-4 relative">
+          <HStack space="md" className=" justify-between items-center">
+            <HStack space="md" className="items-center">
+              <UserAvatar user={otherMember} />
+              <Box className="pt-2">
+                <Heading
+                  size="sm"
+                  className="capitalize"
+                >{`${otherMember.firstName} ${otherMember.lastName}`}</Heading>
+                <HStack space="xs" className=" items-center">
+                  <Box className="w-1 h-1 rounded-full bg-green-600"></Box>
+                  <Text size="xs">Online</Text>
                 </HStack>
-              </>
-            );
-          }}
-        />
-        <Box>
-          <FlatList
-            data={images}
-            renderItem={({ item }) => (
-              <Box className=" relative mr-2">
-                <Button
-                  size="sm"
-                  variant="link"
-                  action="negative"
-                  onPress={() => {
-                    setImages((prev) =>
-                      prev.filter((asset) => asset.uri !== item.uri)
-                    );
-                  }}
-                >
-                  <ButtonIcon as={XCircle} />
-                </Button>
-                <Image size="lg" source={{ uri: item.uri }} alt="New image" />
               </Box>
-            )}
-            horizontal
-          />
-          <FlatList
-            data={[""]}
-            renderItem={({ item }) => (
-              <Box className=" relative mr-2">
-                <Button
-                  size="sm"
-                  action="positive"
-                  onPress={() => {
-                    setShowTrades(true);
-                    setShowDrawer(true);
-                  }}
-                >
-                  <ButtonText>Show Pending Trades</ButtonText>
-                </Button>
-              </Box>
-            )}
-            horizontal
-          />
-        </Box>
+            </HStack>
 
-        <Input
-          control={control}
-          name="text"
-          specifics={{
-            type: "text",
-            iconRight: {
-              icon: Send,
-              onIconPress: handleSubmit(sendMessage, handleSubmitErrorHandler),
-            },
-            iconLeft: {
-              icon: Paperclip,
-              onIconPress: () => {
-                setShowDrawer(!showDrawer);
+            <HStack space="md" className=" items-center">
+              <Button variant="link">
+                <ButtonIcon as={EllipsisVertical} />
+              </Button>
+            </HStack>
+          </HStack>
+          <FlatList
+            className=" gap-2 flex flex-1"
+            showsVerticalScrollIndicator={false}
+            ref={messagesFlatlistRef}
+            onScrollToIndexFailed={(info) => {
+              setTimeout(() => {
+                messagesFlatlistRef.current?.scrollToIndex({
+                  index: info.index,
+                  animated: true,
+                });
+              }, 500);
+            }}
+            data={chat ? chat.messages : []}
+            renderItem={({ item }) => {
+              return (
+                <>
+                  <HStack
+                    className={` mb-4 ${
+                      item.sentBy === user?.id && "justify-end"
+                    }`}
+                  >
+                    <Box
+                      className={
+                        item.sentBy === user?.id
+                          ? "w-11/12 bg-gray-100 p-2 rounded-md"
+                          : "w-11/12 bg-primary-100 p-2 rounded-md"
+                      }
+                    >
+                      {Boolean(item.text) && (
+                        <Text className=" text-typography-600">
+                          {item.text}
+                        </Text>
+                      )}
+                      {Boolean(item.images?.length) &&
+                        //@ts-ignore
+                        item.images?.map((uri, index) => (
+                          <Box key={index} className="aspect-square p-2">
+                            <Image
+                              size="full"
+                              source={{ uri }}
+                              className="rounded-md"
+                              alt="image in message"
+                            />
+                          </Box>
+                        ))}
+                    </Box>
+                  </HStack>
+                </>
+              );
+            }}
+          />
+          <Box>
+            <FlatList
+              data={images}
+              renderItem={({ item }) => (
+                <Box className=" relative mr-2">
+                  <Button
+                    size="sm"
+                    variant="link"
+                    action="negative"
+                    onPress={() => {
+                      setImages((prev) =>
+                        prev.filter((asset) => asset.uri !== item.uri)
+                      );
+                    }}
+                  >
+                    <ButtonIcon as={XCircle} />
+                  </Button>
+                  <Image size="lg" source={{ uri: item.uri }} alt="New image" />
+                </Box>
+              )}
+              horizontal
+            />
+            <FlatList
+              data={[""]}
+              renderItem={({ item }) => (
+                <Box className=" relative mr-2">
+                  <Button
+                    size="sm"
+                    action="positive"
+                    onPress={() => {
+                      setShowTrades(true);
+                      setShowDrawer(true);
+                    }}
+                  >
+                    <ButtonText>Show Pending Trades</ButtonText>
+                  </Button>
+                </Box>
+              )}
+              horizontal
+            />
+          </Box>
+
+          <Input
+            control={control}
+            name="text"
+            specifics={{
+              type: "text",
+              iconRight: {
+                icon: Send,
+                onIconPress: handleSubmit(
+                  sendMessage,
+                  handleSubmitErrorHandler
+                ),
               },
-            },
-            placeholder: "Text...",
-            returnKeyType: "send",
-            onSubmitEditing: handleSubmit(
-              sendMessage,
-              handleSubmitErrorHandler
-            ),
-          }}
-          errors={errors}
-        />
-      </View>
+              iconLeft: {
+                icon: Paperclip,
+                onIconPress: () => {
+                  setShowDrawer(!showDrawer);
+                },
+              },
+              placeholder: "Text...",
+              returnKeyType: "send",
+              onSubmitEditing: handleSubmit(
+                sendMessage,
+                handleSubmitErrorHandler
+              ),
+            }}
+            errors={errors}
+          />
+        </View>
+      </KeyboardAvoidingView>
       <Drawer
         isOpen={showDrawer}
         onClose={() => {
@@ -294,7 +337,7 @@ const Messages = () => {
                             setShowDrawer(false);
                             showToast(
                               "Accepted",
-                              `You accepted a trade with ${item.requestedBy.firstName}`,
+                              `You accepted a trade with ${otherMember.firstName}`,
                               "success"
                             );
                           });
@@ -314,7 +357,7 @@ const Messages = () => {
                             setShowDrawer(false);
                             showToast(
                               "Declined",
-                              `You declined a trade with ${item.requestedBy.firstName}`
+                              `You declined a trade with ${otherMember.firstName}`
                             );
                           });
                         }}

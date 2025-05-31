@@ -1,23 +1,21 @@
 import { tables } from "@/constants"
 import { supabase } from "@/supabase"
 import { populatedChats } from "@/types"
-import { chatT, messageT, userT } from "@/zodSchema"
-import { getUser } from "./users"
+import { chatT, messageT } from "@/zodSchema"
 
 
-export const getChat =async (params:{id?:string, userId:string,}) => {
+export const getChat =async (params:{id?:string, userId:string, otherMember?:string}) => {
     let baseQuery = supabase.from(tables.chats)
-    const baseQuerySelect = baseQuery.select().contains("members", [params.userId])
-
+    const baseQuerySelect = baseQuery.select("*, member1 ( firstName, lastName, id, profilePiture), member2 ( firstName, lastName, id, profilePiture)").or(`member1.eq.${params.userId},member2.eq.${params.userId}`)
     if (params.id) {
         const {data} = await baseQuerySelect.eq("id", params.id).single()
         return await getMessage(data)
     }
     else{
-       const {data}= (await baseQuerySelect) as {data:chatT[], error:any}
+       const res= (await baseQuerySelect) as {data:populatedChats[], error:any}
        const chats : populatedChats[]= []
        const error : any[] = []
-       for(let chat of data) {
+       for(let chat of res.data) {
          const {data, error:retrivalError} = await getMessagesInChat({chat, userId:params.userId})
             chats.push(data)
             error.push(retrivalError)
@@ -26,15 +24,17 @@ export const getChat =async (params:{id?:string, userId:string,}) => {
     }
 }
 
-const getMessagesInChat = async ({chat, userId}:{chat:chatT, userId:string}) => {
-       const error : any[] = []
-        const otherMemberId = chat.members.find(item=>item !== userId)!
-        const {data:messages, error:messageError} = await getMessage({chatId:chat.id}) as {data:messageT[], error:any}
-        const {data:otherMember, error:userError} = await getUser({id:otherMemberId}) as {data:userT, error:any}
-        error.push({messageError, userError})
-        
-        return {data:{...chat, messages, otherMember}, error}
-       
+export const getSpecificChat = async (member1:string, member2:string)=>{
+    let res = await supabase.from(tables.chats).select("*, member1 ( firstName, lastName, id, profilePiture), member2 ( firstName, lastName, id, profilePiture)").eq("member1", member1).eq("member2", member2).single()
+    if (!res.data) {
+        res = await supabase.from(tables.chats).select("*, member1 ( firstName, lastName, id, profilePiture), member2 ( firstName, lastName, id, profilePiture)").eq("member1", member2).eq("member2", member1).single()
+    }
+    return res
+}
+
+const getMessagesInChat = async ({chat, userId}:{chat:Omit<populatedChats, "messages">, userId:string}) => {
+        const {data:messages, error} = await getMessage({chatId:chat.id}) as {data:messageT[], error:any}
+        return {data:{...chat, messages, }, error}    
 }
 
 export const getMessage =async (params:{id?:string, chatId:string}) => {
@@ -54,10 +54,10 @@ export const insertUpdateDeleteChat = async (chat:Partial<chatT>, action: "updat
     if (action === "insert") {
      return await  baseQuery.insert(chat)
     }
-    else if (action === "update"){
-        const {id, members, ...rest} = chat
-       return await baseQuery.update(rest).eq("id", id)
-    }
+    // else if (action === "update"){
+    //     const {id, members, ...rest} = chat
+    //    return await baseQuery.update(rest).eq("id", id)
+    // }
     else{
        return await baseQuery.delete().eq("id", chat.id)
     }

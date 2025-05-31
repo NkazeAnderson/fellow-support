@@ -11,13 +11,9 @@ import {
 import { tables } from "@/constants";
 import { useUser } from "@/hooks/useUser";
 import { supabase } from "@/supabase";
-import {
-  appConstantsFromDB,
-  populatedChats,
-  populatedProductT,
-  populatedTradesT,
-} from "@/types";
+import { populatedChats, populatedProductT, populatedTradesT } from "@/types";
 import { getProperty } from "@/utils/properties";
+import { getAllRemoteConst } from "@/utils/remoteConstants";
 import { userT } from "@/zodSchema";
 import { REALTIME_SUBSCRIBE_STATES } from "@supabase/supabase-js";
 import { CheckCircle, Info, XCircle } from "lucide-react-native";
@@ -38,12 +34,13 @@ export interface AppContextT {
     onCloseComplete?: () => void
   ): void;
   user?: userT;
-  constantsFromDB: appConstantsFromDB;
   properties: populatedProductT[];
-  myProperties: populatedProductT[];
   trades: populatedTradesT[];
   chats: populatedChats[];
-  handleSupabaseResErrors<T extends supabaseResT<D>, D = T["data"]>(obj: T): D;
+  handleSupabaseResErrors<T extends supabaseResT<D>, D = T["data"]>(
+    obj: T,
+    customMessage?: string
+  ): D;
 }
 
 type supabaseResT<T> = { error: unknown; data: T };
@@ -91,13 +88,8 @@ const AppContextProvider = (props: PropsWithChildren) => {
   const { user, trades, chats, updateStates } = useUser();
   const subscribedToRealTime = useRef(false);
 
-  const constantsFromDB = useRef<appConstantsFromDB>({
-    categories: [],
-    subCategories: [],
-  });
   const setUpApp = async () => {
-    const categoryPromise = supabase.from(tables.category).select();
-    const subCategoryPromise = supabase.from(tables.subCategory).select();
+    getAllRemoteConst();
     getProperty({}).then((res) => {
       if (res.data as populatedProductT[]) {
         setProperties(res.data!);
@@ -109,28 +101,17 @@ const AppContextProvider = (props: PropsWithChildren) => {
     const myProductsPromise = supabase
       .from(tables.products)
       .select()
-      .eq("owner", user?.id)
-      .limit(10);
-    const [categoryRes, subCategoryRes, productsRes, myProductsRes] =
-      await Promise.all([
-        categoryPromise,
-        subCategoryPromise,
-        productPromise,
-        myProductsPromise,
-      ]);
+      .eq("owner", user?.id);
+    const [productsRes, myProductsRes] = await Promise.all([
+      productPromise,
+      myProductsPromise,
+    ]);
 
-    if (
-      categoryRes.data &&
-      subCategoryRes.data &&
-      productsRes.data &&
-      myProductsRes.data
-    ) {
-      constantsFromDB.current = {
-        categories: categoryRes.data,
-        subCategories: subCategoryRes.data,
-      };
+    if (productsRes.data) {
+      setProperties(productsRes.data);
+    }
 
-      setMyProperties(myProductsRes.data);
+    if (myProductsRes.data) {
     }
   };
 
@@ -151,7 +132,6 @@ const AppContextProvider = (props: PropsWithChildren) => {
             schema: "public",
           },
           (payload) => {
-            console.log(payload);
             //@ts-ignore
             updateStates({ table: payload.table, data: payload.new });
             if (payload.table === tables.products) {
@@ -192,7 +172,8 @@ const AppContextProvider = (props: PropsWithChildren) => {
   }, []);
 
   const handleSupabaseResErrors: AppContextT["handleSupabaseResErrors"] = (
-    res
+    res,
+    customMessage?: string
   ) => {
     if (res.error) {
       console.error({ err: res.error });
@@ -202,7 +183,9 @@ const AppContextProvider = (props: PropsWithChildren) => {
           if ("message" in res.error) {
             showToast(
               "Error",
-              typeof res.error.message == "string"
+              customMessage
+                ? customMessage
+                : typeof res.error.message == "string"
                 ? res.error.message
                 : "There was an error with your request",
               "error"
@@ -225,9 +208,7 @@ const AppContextProvider = (props: PropsWithChildren) => {
       value={{
         showToast,
         user,
-        constantsFromDB: constantsFromDB.current,
         properties,
-        myProperties,
         trades,
         chats,
         handleSupabaseResErrors,

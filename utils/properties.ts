@@ -1,11 +1,16 @@
 import { tables } from "@/constants"
 import { supabase } from "@/supabase"
-import { productT } from "@/zodSchema"
+import { populatedProductT } from "@/types"
+import { productT, subCategoryT } from "@/zodSchema"
+import { getRemoteConstant } from "./remoteConstants"
+import { getUser } from "./users"
+
+const properties: populatedProductT[] = []
 
 
-export const getProperty =async (params:{id?:string, ownerId?:string, searchText?:string}) => {
+export const getProperty =async (params:{id?:string, ownerId?:string, searchText?:string},) => {
     let baseQuery = supabase.from(tables.products)
-    const baseQuerySelect = baseQuery.select("*, subCategory (*) , owner ( firstName, lastName, id, profilePiture)")
+    const baseQuerySelect = baseQuery.select("*, subCategory (*) , owner (firstName, lastName, id, profilePiture)")
     
     if (params.id) {
         return await baseQuerySelect.eq("id", params.id).single()
@@ -52,4 +57,12 @@ export const insertUpdateDeleteProperty = async (product:Partial<productT>, acti
     else{
        return await baseQuery.delete().eq("id", product.id)
     }
+}
+
+export const populateProperty = async (property:productT):Promise<populatedProductT> =>{
+  return {
+    ... property, 
+    subCategory: await getRemoteConstant({id: property.subCategory, type:"SubCategory"}) as subCategoryT, 
+    owner: await getUser({id:property.owner})
+  }
 }

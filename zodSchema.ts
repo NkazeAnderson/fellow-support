@@ -12,6 +12,8 @@ export const userSchema = createSelectSchema(usersTable,
     }
 )
 
+export const publicUserSchema = userSchema.pick({id:true, firstName:true, lastName:true, profilePiture:true})
+
 export const productSchema = createSelectSchema(productsTable,{
     value:(schema)=>schema.nullish()
     })

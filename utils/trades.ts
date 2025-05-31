@@ -5,7 +5,7 @@ import { tradeT } from "@/zodSchema"
 
 export const getTrade =async (params:{id?:string, ownerId?:string, searchText?:string}) => {
     let baseQuery = supabase.from(tables.trades)
-    const baseQuerySelect = baseQuery.select("*, productRequested (*) , requestedBy ( firstName, lastName, id, profilePiture), product (*)")
+    const baseQuerySelect = baseQuery.select("*, productRequested (*,  owner(firstName, lastName, id, profilePiture)), product (*, owner(firstName, lastName, id, profilePiture))")
     
     if (params.id) {
         return await baseQuerySelect.eq("id", params.id).single()

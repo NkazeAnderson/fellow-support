@@ -31,8 +31,8 @@ export const productsTable = pgTable(tables.products, {
   description: text().notNull(),
   picturesUrl: text().array().notNull(),
   value:integer(),
-  available:boolean().default(true),
-  owner:uuid().references(()=>usersTable.id),
+  available:boolean().default(true).notNull(),
+  owner:uuid().references(()=>usersTable.id).notNull(),
   createdAt:date({mode:"string"}).defaultNow().notNull(),
   subCategory:uuid().notNull().references(()=>productSubCategoriesTable.id), 
   location: text().notNull()
@@ -44,12 +44,14 @@ export const tradesTable = pgTable(tables.trades, {
   product:uuid().references(()=>productsTable.id).notNull(),
   productRequested:uuid().references(()=>productsTable.id).notNull(),
   approvalStatus:tradeApprovals().default("pending").notNull(),
+  location:text().notNull(),
   createdAt:timestamp({mode:"string"}).defaultNow().notNull(),
 });
 
 export const chatsTable = pgTable(tables.chats,{
     id: uuid().primaryKey().defaultRandom().notNull(),
-    members:uuid().references(()=>usersTable.id).array().notNull(),
+    member1:uuid().references(()=>usersTable.id).notNull(),
+    member2:uuid().references(()=>usersTable.id).notNull(),
 })
 
 export const messagesTable = pgTable(tables.messages,{

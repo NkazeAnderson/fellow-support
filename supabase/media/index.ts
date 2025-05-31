@@ -29,7 +29,7 @@ export async function uploadBase64ImageToSupabase(
     throw new Error("Base 64 required or unauthenticanted");
     
   }
-  const fileName = `${userRes.data.user.id}/${asset.fileName ?? new Date().getTime()}.${asset.mimeType?.split("/")[1]}`
+  const fileName = `${userRes.data.user.id}/${new Date().getTime()}_${asset.fileName ?? "file"}.${asset.mimeType?.split("/")[1]}`
 
    const base64 = await getBase64FromUri(asset.uri)
     // Upload to Supabase Storage

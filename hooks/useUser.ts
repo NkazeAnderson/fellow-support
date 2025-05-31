@@ -3,7 +3,6 @@ import { supabase } from "@/supabase";
 import { populatedChats, populatedTradesT } from "@/types";
 import { getChat } from "@/utils/chats";
 import { getTrade } from "@/utils/trades";
-import { getUser } from "@/utils/users";
 import { chatSchema, messageSchema, tradeSchema, userT } from "@/zodSchema";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
@@ -70,7 +69,6 @@ export function useUser() {
       })
       getChat({userId: user.id}).then(res=>{
         console.log({chats: res.data});
-        
       res.data &&  setChats(res.data)
       })
    
@@ -109,6 +107,9 @@ export function useUser() {
     table: (typeof tables)[keyof typeof tables], data:any
   }) {
     console.log({table});
+    if (!user) {
+      return
+    }
     
     switch (table) {
       case "Chats":
@@ -117,9 +118,10 @@ export function useUser() {
           
         }
         else {
-           getUser({id:chatInfo.members.find(item=>item!==user?.id)!}).then(res=>{
-            const otherMember = res.data as userT
-            setChats(prev=>[...prev, {...chatInfo, messages:[], otherMember }])
+          
+           getChat({id:chatInfo.id, userId:user.id}).then(res=>{
+            
+            setChats(prev=>[...prev, ...res.data])
            })
         }
         break;

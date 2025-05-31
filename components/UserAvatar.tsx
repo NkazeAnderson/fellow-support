@@ -18,9 +18,7 @@ const UserAvatar = ({
 }) => {
   return (
     <Avatar size={size}>
-      <AvatarFallbackText>{`${user.firstName.charAt(0)} ${user.lastName.charAt(
-        0
-      )}`}</AvatarFallbackText>
+      <AvatarFallbackText>{`${user.firstName} ${user.lastName}`}</AvatarFallbackText>
       <AvatarImage
         source={{
           uri: user.profilePiture ?? undefined,
