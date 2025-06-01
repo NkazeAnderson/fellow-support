@@ -6,17 +6,19 @@ import { Center } from "@/components/ui/center";
 import { Drawer, DrawerBackdrop } from "@/components/ui/drawer";
 import { Heading } from "@/components/ui/heading";
 import UserAvatar from "@/components/UserAvatar";
-import { AppContext, AppContextT } from "@/context/AppContextProvider";
+import { useAppContext } from "@/context/AppContextProvider";
 import { supabase } from "@/supabase";
 import { uploadBase64ImageToSupabase } from "@/supabase/media";
 import { insertUpdateDeleteUser } from "@/utils/users";
 import { ImagePickerAsset } from "expo-image-picker";
 import { CheckCheck, LogOut, SwitchCamera } from "lucide-react-native";
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import { View } from "react-native";
 const Account = () => {
   const [loggingOut, setLoggingOut] = useState(false);
-  const { user } = useContext(AppContext) as AppContextT;
+  const {
+    userMethods: { user },
+  } = useAppContext();
   const [image, setImage] = useState<ImagePickerAsset>();
   const [showDrawer, setShowDrawer] = useState(false);
   return (

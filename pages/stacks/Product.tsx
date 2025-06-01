@@ -30,8 +30,7 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import UserAvatar from "@/components/UserAvatar";
-import { AppContext, AppContextT } from "@/context/AppContextProvider";
-import { insertUpdateDeleteChat } from "@/utils/chats";
+import { useAppContext } from "@/context/AppContextProvider";
 import { insertUpdateDeleteProperty } from "@/utils/properties";
 import { insertUpdateDeleteTrade } from "@/utils/trades";
 import { tradeT } from "@/zodSchema";
@@ -45,7 +44,7 @@ import {
   Share2,
   Trash,
 } from "lucide-react-native";
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FlatList, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -56,9 +55,11 @@ const Product = () => {
   const { id } = useLocalSearchParams<{
     id: string;
   }>();
-  const { properties, user, showToast, chats } = useContext(
-    AppContext
-  ) as AppContextT;
+  const {
+    userMethods: { user, chats },
+    propertyMethods: { properties },
+    showToast,
+  } = useAppContext();
   const flatListRef = useRef<FlatList>(null);
   const loadedSlider = useRef(false);
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
@@ -300,15 +301,6 @@ const Product = () => {
                                 "success"
                               );
                               setShowDrawer(false);
-                              !chats.some((chat) =>
-                                chat.members.includes(user.id)
-                              ) &&
-                                insertUpdateDeleteChat(
-                                  {
-                                    members: [user.id, property.owner.id],
-                                  },
-                                  "insert"
-                                );
                             } else {
                               showToast(
                                 "Failed",

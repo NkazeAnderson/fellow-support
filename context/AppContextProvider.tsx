@@ -8,24 +8,16 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
-import { tables } from "@/constants";
+import useProperty from "@/hooks/useProperty";
 import { useUser } from "@/hooks/useUser";
-import { supabase } from "@/supabase";
-import { populatedChats, populatedProductT, populatedTradesT } from "@/types";
-import { getProperty } from "@/utils/properties";
-import { getAllRemoteConst } from "@/utils/remoteConstants";
-import { userT } from "@/zodSchema";
-import { REALTIME_SUBSCRIBE_STATES } from "@supabase/supabase-js";
 import { CheckCircle, Info, XCircle } from "lucide-react-native";
 import React, {
   createContext,
   PropsWithChildren,
+  useContext,
   useEffect,
-  useRef,
-  useState,
 } from "react";
 
-const DbChannel = supabase.channel(`chat`);
 export interface AppContextT {
   showToast(
     heading: string,
@@ -33,10 +25,8 @@ export interface AppContextT {
     action?: "error" | "warning" | "success" | "info" | "muted",
     onCloseComplete?: () => void
   ): void;
-  user?: userT;
-  properties: populatedProductT[];
-  trades: populatedTradesT[];
-  chats: populatedChats[];
+  userMethods: ReturnType<typeof useUser>;
+  propertyMethods: ReturnType<typeof useProperty>;
   handleSupabaseResErrors<T extends supabaseResT<D>, D = T["data"]>(
     obj: T,
     customMessage?: string
@@ -46,6 +36,14 @@ export interface AppContextT {
 type supabaseResT<T> = { error: unknown; data: T };
 
 export const AppContext = createContext<null | AppContextT>(null);
+
+export const useAppContext = () => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error("Wrap element with app context provider");
+  }
+  return context;
+};
 
 const AppContextProvider = (props: PropsWithChildren) => {
   const toast = useToast();
@@ -83,93 +81,8 @@ const AppContextProvider = (props: PropsWithChildren) => {
     });
   };
 
-  const [properties, setProperties] = useState<populatedProductT[]>([]);
-  const [myProperties, setMyProperties] = useState<populatedProductT[]>([]);
-  const { user, trades, chats, updateStates } = useUser();
-  const subscribedToRealTime = useRef(false);
-
-  const setUpApp = async () => {
-    getAllRemoteConst();
-    getProperty({}).then((res) => {
-      if (res.data as populatedProductT[]) {
-        setProperties(res.data!);
-      } else {
-        console.log(res.error);
-      }
-    });
-    const productPromise = supabase.from(tables.products).select().limit(10);
-    const myProductsPromise = supabase
-      .from(tables.products)
-      .select()
-      .eq("owner", user?.id);
-    const [productsRes, myProductsRes] = await Promise.all([
-      productPromise,
-      myProductsPromise,
-    ]);
-
-    if (productsRes.data) {
-      setProperties(productsRes.data);
-    }
-
-    if (myProductsRes.data) {
-    }
-  };
-
-  useEffect(() => {
-    if (user) {
-      setUpApp();
-    }
-    return () => {};
-  }, [user]);
-
-  useEffect(() => {
-    try {
-      !subscribedToRealTime.current &&
-        DbChannel.on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-          },
-          (payload) => {
-            //@ts-ignore
-            updateStates({ table: payload.table, data: payload.new });
-            if (payload.table === tables.products) {
-              //@ts-ignore
-              getProperty({ id: payload.new?.id as string }).then((res) => {
-                if (res.data?.id === user?.id) {
-                  return setMyProperties((prev) => [res.data, ...prev]);
-                }
-                setProperties((prev) => [res.data, ...prev]);
-              });
-            }
-          }
-        ).subscribe((status, err) => {
-          console.log({ status, err });
-
-          if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
-            subscribedToRealTime.current = true;
-          }
-        });
-
-      setInterval(() => {
-        !subscribedToRealTime.current &&
-          DbChannel.subscribe((status, err) => {
-            console.log({ status, err });
-
-            if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
-              subscribedToRealTime.current = true;
-            }
-          });
-      }, 10000);
-    } catch (error) {}
-
-    return () => {
-      console.log("Db un sub");
-      DbChannel.unsubscribe();
-      subscribedToRealTime.current = false;
-    };
-  }, []);
+  const userMethods = useUser();
+  const propertyMethods = useProperty();
 
   const handleSupabaseResErrors: AppContextT["handleSupabaseResErrors"] = (
     res,
@@ -207,10 +120,8 @@ const AppContextProvider = (props: PropsWithChildren) => {
     <AppContext.Provider
       value={{
         showToast,
-        user,
-        properties,
-        trades,
-        chats,
+        userMethods,
+        propertyMethods,
         handleSupabaseResErrors,
       }}
     >

@@ -1,10 +1,12 @@
 import PropertyCard from "@/components/PropertyCard";
 import { Box } from "@/components/ui/box";
-import { AppContext, AppContextT } from "@/context/AppContextProvider";
-import React, { useContext } from "react";
+import { useAppContext } from "@/context/AppContextProvider";
+import React from "react";
 import { FlatList, View } from "react-native";
 const Home = () => {
-  const { properties } = useContext(AppContext) as AppContextT;
+  const {
+    propertyMethods: { properties },
+  } = useAppContext();
   return (
     <View className="p-2 bg-primary-0 flex flex-1">
       <FlatList

@@ -10,7 +10,7 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import UserAvatar from "@/components/UserAvatar";
-import { AppContext, AppContextT } from "@/context/AppContextProvider";
+import { useAppContext } from "@/context/AppContextProvider";
 import { uploadBase64ImageToSupabase } from "@/supabase/media";
 import { handleSubmitErrorHandler } from "@/utils";
 import {
@@ -29,7 +29,7 @@ import {
   Send,
   XCircle,
 } from "lucide-react-native";
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FlatList, KeyboardAvoidingView, ScrollView, View } from "react-native";
 import { z } from "zod";
@@ -44,9 +44,10 @@ const schema = messageSchema.omit({
 const Messages = () => {
   const { member } = useLocalSearchParams<{ member: string }>();
   const otherMember = publicUserSchema.parse(JSON.parse(member));
-  const { chats, user, trades, showToast } = useContext(
-    AppContext
-  ) as AppContextT;
+  const {
+    userMethods: { chats, user, trades },
+    showToast,
+  } = useAppContext();
   const [showDrawer, setShowDrawer] = useState(false);
   const [images, setImages] = useState<ImagePickerAsset[]>([]);
   const messagesFlatlistRef = useRef<FlatList | null>(null);

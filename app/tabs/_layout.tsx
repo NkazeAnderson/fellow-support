@@ -1,12 +1,21 @@
 import Logo from "@/components/Logo";
 import { Box } from "@/components/ui/box";
 import { Button, ButtonIcon } from "@/components/ui/button";
+import { Center } from "@/components/ui/center";
 import { HStack } from "@/components/ui/hstack";
 import { Icon } from "@/components/ui/icon";
 import UserAvatar from "@/components/UserAvatar";
-import { AppContext, AppContextT } from "@/context/AppContextProvider";
+import { tables } from "@/constants";
+import { useAppContext } from "@/context/AppContextProvider";
+import { supabase } from "@/supabase";
+import { populatedProductT } from "@/types";
+import { getChat } from "@/utils/chats";
+import { getProperty } from "@/utils/properties";
+import { getAllRemoteConst } from "@/utils/remoteConstants";
+import { getTrade } from "@/utils/trades";
+import { REALTIME_SUBSCRIBE_STATES } from "@supabase/supabase-js";
 
-import { Link, Tabs } from "expo-router";
+import { Link, router, Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import {
   Bell,
@@ -17,9 +26,129 @@ import {
   Search,
   UserCircle,
 } from "lucide-react-native";
-import React, { useContext } from "react";
+import React, { useEffect, useRef } from "react";
+const DbChannel = supabase.channel(`RealTime`);
 const _layout = () => {
-  const { user } = useContext(AppContext) as AppContextT;
+  const {
+    userMethods: { user, updateChats, updateTrades, updateUser },
+    propertyMethods: { updateProperty },
+  } = useAppContext();
+  const subscribedToRealTime = useRef(false);
+
+  useEffect(() => {
+    if (!user) return;
+
+    getTrade({}).then((res) => {
+      res.data && updateTrades(res.data);
+    });
+    getChat({ userId: user.id }).then((res) => {
+      console.log({ chats: res.data });
+      res.data && updateChats(res.data);
+    });
+
+    getProperty({}).then((res) => {
+      if (res.data as populatedProductT[]) {
+        updateProperty(res.data!);
+        getProperty({ ownerId: user.id }).then((myPropertiesRes) => {
+          const data = myPropertiesRes.data as populatedProductT[];
+          if (data) {
+            const unlisted: populatedProductT[] = [];
+            data.forEach((item) => {
+              if (
+                !res.data.some(
+                  (property: populatedProductT) => property.id === item.id
+                )
+              ) {
+                unlisted.push(item);
+                updateProperty(unlisted);
+              }
+            });
+          }
+        });
+      } else {
+        console.log(res.error);
+      }
+    });
+  }, [user]);
+
+  useEffect(() => {
+    getAllRemoteConst();
+    supabase.auth
+      .getUser()
+      .then(async (res) => {
+        if (res.data && res.data.user) {
+          const userRes = await supabase
+            .from(tables.users)
+            .select()
+            .eq("id", res.data.user.id)
+            .single();
+
+          if (userRes.data) {
+            updateUser(userRes.data);
+          } else {
+            console.log("Failed to get user info", res);
+            router.back();
+          }
+        }
+      })
+      .catch((e) => {
+        console.log(e);
+        router.back();
+      });
+
+    try {
+      !subscribedToRealTime.current &&
+        DbChannel.on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+          },
+          (payload) => {
+            //@ts-ignore
+            updateStates({ table: payload.table, data: payload.new });
+            if (payload.table === tables.products) {
+              //@ts-ignore
+              getProperty({ id: payload.new?.id as string }).then((res) => {});
+            }
+          }
+        ).subscribe((status, err) => {
+          console.log({ status, err });
+
+          if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
+            subscribedToRealTime.current = true;
+          }
+        });
+
+      // setInterval(() => {
+      //   !subscribedToRealTime.current &&
+      //     DbChannel.subscribe((status, err) => {
+      //       console.log({ status, err });
+
+      //       if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
+      //         subscribedToRealTime.current = true;
+      //       }
+      //     });
+      // }, 10000);
+    } catch (error) {}
+
+    return () => {
+      console.log("Db un sub");
+      DbChannel.unsubscribe();
+      subscribedToRealTime.current = false;
+    };
+  }, []);
+
+  if (!user) {
+    return (
+      <Center className=" flex-1">
+        <Box className=" animate-pulse">
+          <Logo />
+        </Box>
+      </Center>
+    );
+  }
+
   return (
     <>
       <Tabs

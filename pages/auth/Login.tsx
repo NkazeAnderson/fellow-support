@@ -10,14 +10,14 @@ import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { AppContext, AppContextT } from "@/context/AppContextProvider";
+import { useAppContext } from "@/context/AppContextProvider";
 import { supabase } from "@/supabase";
 import { handleAppErrors, handleSubmitErrorHandler } from "@/utils";
 import { userSchema } from "@/zodSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "expo-router";
 import { Eye, EyeOffIcon, Lock, Mail } from "lucide-react-native";
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -34,7 +34,7 @@ const Login = () => {
     handleSubmit,
   } = useForm({ resolver: zodResolver(schema) });
 
-  const { handleSupabaseResErrors } = useContext(AppContext) as AppContextT;
+  const { handleSupabaseResErrors } = useAppContext();
 
   const login = async ({ email, password }: z.infer<typeof schema>) => {
     const res = await supabase.auth.signInWithPassword({ email, password });

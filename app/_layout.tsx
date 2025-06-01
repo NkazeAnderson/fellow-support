@@ -16,8 +16,10 @@ import * as Linking from "expo-linking";
 import TimeAgo from "javascript-time-ago";
 
 import { supabase } from "@/supabase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 import en from "javascript-time-ago/locale/en";
-import { useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -36,6 +38,33 @@ export default function RootLayout() {
   if (url) {
     console.log(url);
   }
+
+  useEffect(() => {
+    if (!loaded) return;
+    supabase.auth.onAuthStateChange(async (e, session) => {
+      if (session) {
+        const { user } = session;
+        if (user && user.email_confirmed_at) {
+          router.replace("/tabs");
+        } else {
+          router.replace("/login");
+        }
+      } else {
+        AsyncStorage.getItem("onBoarded").then((res) => {
+          if (res) {
+            router.replace("/login");
+          } else {
+            router.replace("/get-started");
+          }
+        });
+      }
+    });
+
+    return () => {
+      // supabase.auth.signOut();
+      // console.log("logged out");
+    };
+  }, [loaded]);
 
   if (!loaded) {
     // Async font loading only occurs in development.

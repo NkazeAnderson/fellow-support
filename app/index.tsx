@@ -1,4 +1,5 @@
 import Logo from "@/components/Logo";
+import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
 import { supabase } from "@/supabase";
 import React, { useEffect } from "react";
@@ -13,7 +14,9 @@ const index = () => {
   }, []);
   return (
     <Center className="flex-1">
-      <Logo />
+      <Box className=" animate-pulse">
+        <Logo />
+      </Box>
     </Center>
   );
 };

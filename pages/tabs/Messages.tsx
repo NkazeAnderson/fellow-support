@@ -6,14 +6,16 @@ import { HStack } from "@/components/ui/hstack";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import UserAvatar from "@/components/UserAvatar";
-import { AppContext, AppContextT } from "@/context/AppContextProvider";
+import { useAppContext } from "@/context/AppContextProvider";
 import { router } from "expo-router";
 import { Image } from "lucide-react-native";
-import React, { useContext } from "react";
+import React from "react";
 import { FlatList, TouchableOpacity, View } from "react-native";
 const Messages = () => {
   const isOnline = false;
-  const { chats, user } = useContext(AppContext) as AppContextT;
+  const {
+    userMethods: { chats, user },
+  } = useAppContext();
   return (
     <View className="flex flex-1 bg-primary-0">
       <FlatList

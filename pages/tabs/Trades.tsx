@@ -17,7 +17,9 @@ import { MapPin, MessageCircle, RefreshCcwDot } from "lucide-react-native";
 import React, { useContext } from "react";
 import { FlatList, TouchableOpacity, View } from "react-native";
 const Trades = () => {
-  const { trades, chats, user } = useContext(AppContext) as AppContextT;
+  const {
+    userMethods: { trades, chats, user },
+  } = useContext(AppContext) as AppContextT;
 
   return (
     <View className="flex flex-1 bg-primary-0 p-4">
