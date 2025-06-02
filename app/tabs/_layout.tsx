@@ -8,12 +8,18 @@ import UserAvatar from "@/components/UserAvatar";
 import { tables } from "@/constants";
 import { useAppContext } from "@/context/AppContextProvider";
 import { supabase } from "@/supabase";
+import {
+  chatRealtimeChannel,
+  messageRealtimeChannel,
+  productRealtimeChannel,
+  tradeRealtimeChannel,
+  userRealtimeChannel,
+} from "@/supabase/realtime";
 import { populatedProductT } from "@/types";
 import { getChat } from "@/utils/chats";
 import { getProperty } from "@/utils/properties";
 import { getAllRemoteConst } from "@/utils/remoteConstants";
 import { getTrade } from "@/utils/trades";
-import { REALTIME_SUBSCRIBE_STATES } from "@supabase/supabase-js";
 
 import { Link, router, Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -30,13 +36,20 @@ import React, { useEffect, useRef } from "react";
 const DbChannel = supabase.channel(`RealTime`);
 const _layout = () => {
   const {
-    userMethods: { user, updateChats, updateTrades, updateUser },
+    userMethods: {
+      user,
+      updateChats,
+      updateTrades,
+      updateUser,
+      addMessageToChat,
+    },
     propertyMethods: { updateProperty },
   } = useAppContext();
-  const subscribedToRealTime = useRef(false);
+
+  const loaded = useRef(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || loaded.current) return;
 
     getTrade({}).then((res) => {
       res.data && updateTrades(res.data);
@@ -69,6 +82,7 @@ const _layout = () => {
         console.log(res.error);
       }
     });
+    loaded.current = true;
   }, [user]);
 
   useEffect(() => {
@@ -85,6 +99,31 @@ const _layout = () => {
 
           if (userRes.data) {
             updateUser(userRes.data);
+
+            productRealtimeChannel(updateProperty, userRes.data.id).subscribe(
+              (status, err) => {
+                console.log("Product RealTime Subscription", { status, err });
+              }
+            );
+            userRealtimeChannel(updateUser, userRes.data.id).subscribe(
+              (status, err) => {
+                console.log("User RealTime Subscription", { status, err });
+              }
+            );
+            chatRealtimeChannel(updateChats).subscribe((status, err) => {
+              console.log("Chat RealTime Subscription", { status, err });
+            });
+            chatRealtimeChannel(updateChats).subscribe((status, err) => {
+              console.log("Chat RealTime Subscription", { status, err });
+            });
+            messageRealtimeChannel(addMessageToChat, updateChats).subscribe(
+              (status, err) => {
+                console.log("Message RealTime Subscription", { status, err });
+              }
+            );
+            tradeRealtimeChannel(updateTrades).subscribe((status, err) => {
+              console.log("Trade RealTime Subscription", { status, err });
+            });
           } else {
             console.log("Failed to get user info", res);
             router.back();
@@ -96,46 +135,8 @@ const _layout = () => {
         router.back();
       });
 
-    try {
-      !subscribedToRealTime.current &&
-        DbChannel.on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-          },
-          (payload) => {
-            //@ts-ignore
-            updateStates({ table: payload.table, data: payload.new });
-            if (payload.table === tables.products) {
-              //@ts-ignore
-              getProperty({ id: payload.new?.id as string }).then((res) => {});
-            }
-          }
-        ).subscribe((status, err) => {
-          console.log({ status, err });
-
-          if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
-            subscribedToRealTime.current = true;
-          }
-        });
-
-      // setInterval(() => {
-      //   !subscribedToRealTime.current &&
-      //     DbChannel.subscribe((status, err) => {
-      //       console.log({ status, err });
-
-      //       if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
-      //         subscribedToRealTime.current = true;
-      //       }
-      //     });
-      // }, 10000);
-    } catch (error) {}
-
     return () => {
-      console.log("Db un sub");
-      DbChannel.unsubscribe();
-      subscribedToRealTime.current = false;
+      supabase.removeAllChannels();
     };
   }, []);
 

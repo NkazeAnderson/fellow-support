@@ -11,7 +11,7 @@ import { Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { AppContext, AppContextT } from "@/context/AppContextProvider";
+import { useAppContext } from "@/context/AppContextProvider";
 import { uploadBase64ImageToSupabase } from "@/supabase/media";
 import { populatedProductT } from "@/types";
 import { handleAppErrors, handleSubmitErrorHandler } from "@/utils";
@@ -22,7 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ImagePickerAsset } from "expo-image-picker";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { Camera, DollarSign, MapPin, Star, XCircle } from "lucide-react-native";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   ActivityIndicator,
@@ -41,9 +41,11 @@ const schema = productSchema.omit({
 });
 
 const AddProperty = () => {
-  const { user, showToast, handleSupabaseResErrors } = useContext(
-    AppContext
-  ) as AppContextT;
+  const {
+    userMethods: { user },
+    showToast,
+    handleSupabaseResErrors,
+  } = useAppContext();
   const { id } = useLocalSearchParams<{ id?: string }>();
 
   const [images, setiImages] = useState<(ImagePickerAsset | string)[]>([]);

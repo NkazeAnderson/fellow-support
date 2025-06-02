@@ -1,9 +1,6 @@
-import { tables } from "@/constants";
 import { supabase } from "@/supabase";
 import { populatedChats, populatedTradesT } from "@/types";
-import { getChat } from "@/utils/chats";
-import { getTrade } from "@/utils/trades";
-import { chatSchema, messageSchema, tradeSchema, userT } from "@/zodSchema";
+import { messageT, userT } from "@/zodSchema";
 import { useState } from "react";
 
   const OnlineChannel = supabase.channel("OnlineChannel")
@@ -55,102 +52,77 @@ export function useUser() {
   //},[user])
 
 
-  async function updateUserChatTrades({table, data}:{
-    table: (typeof tables)[keyof typeof tables], data:any
-  }) {
-    console.log({table});
-    if (!user) {
-      return
-    }
-    
-    switch (table) {
-      case "Chats":
-        const chatInfo = chatSchema.parse(data)
-        if (chats.some(item=>item.id === chatInfo.id)) {
-          
-        }
-        else {
-          
-           getChat({id:chatInfo.id, userId:user.id}).then(res=>{
-            
-            setChats(prev=>[...prev, ...res.data])
-           })
-        }
-        break;
-
-        case "Messages":
-          const messageInfo = messageSchema.parse(data)
-          setChats(prev=>prev.map((item)=>{
-            if (item.id === messageInfo.chat) {
-              item.messages.push(messageInfo)
-            }
-            return item
-          }))
-        break
-
-        case "Trades":
-          const tradeInfo = tradeSchema.parse(data)
-          const trade = await getTrade({id:tradeInfo.id})
-          
-             setTrades(prev=>{
-            if (prev.some(item=>item.id === trade.data?.id)) {
-              return prev.map(item=>item.id === trade.data?.id ? trade.data : item)
-            }
-            return [trade.data, ...prev]
-          })
-      
-        break
-    
-      default:
-        break;
-    }
-  }
   
     function updateUser(user:userT ) {
           setUser(user)
       }
 
       function updateTrades(trade:populatedTradesT | populatedTradesT[], remove?:boolean) {
+
+        setTrades(prev=>{
+
+          if (Array.isArray(trade)) {
+              return [...prev, ...trade]
+          }
+          
+          if (remove) {
+            return  prev.filter(item=>item.id !== trade.id)
+          }
+          const index = prev.findIndex(item=>item.id === trade.id)
+          if (index >= 0) {
+              prev[index]=trade
+            return  [...prev]
+          }
+          else {
+            return  [trade, ...prev]
+          }
+        })
             
-            if (Array.isArray(trade)) {
-                setTrades(prev=>[...prev, ...trade])
-                return 
-            }
-            
-            if (remove) {
-              return  setTrades(trades.filter(item=>item.id !== trade.id))
-            }
-            const index = trades.findIndex(item=>item.id === trade.id)
-            if (index >= 0) {
-                trades[index]=trade
-              return  setTrades([...trades])
-            }
-            else {
-              return  setTrades([trade, ...trades])
-            }
            
         }
 
-      function updateChats(chat:populatedChats | populatedChats[], remove?:boolean) {
-            
-            if (Array.isArray(chat)) {
-                setChats(prev=>[...prev, ...chat])
-                return 
-            }
-            
-            if (remove) {
-              return  setChats(chats.filter(item=>item.id !== chat.id))
-            }
-            const index = chats.findIndex(item=>item.id === chat.id)
-            if (index >= 0) {
-                chats[index]=chat
-              return  setChats([...chats])
-            }
-            else {
-              return  setChats([chat, ...chats])
-            }
+      function updateChats(chat:populatedChats | populatedChats[] , remove?:boolean ) {
+           setChats(prev=>{
+
+             if (Array.isArray(chat)) {
+                 return [...prev, ...chat]
+             }
+             
+             if (remove) {
+               return  prev.filter(item=>item.id !== chat.id)
+             }
+             const index = prev.findIndex(item=>item.id === chat.id)
+             if (index >= 0) {
+                 prev[index]=chat
+               return  [...prev]
+             }
+             else {
+               return [chat, ...prev]
+             }
+           })
+
            
         }
 
-return {user, trades, chats, updateUser, updateTrades, updateChats}
+      function addMessageToChat(message: messageT) {
+        setChats(prev=>{
+
+          const chatIndex  = prev.findIndex(item=>item.id === message.chat)
+          // debugger
+          console.log(chatIndex);
+          
+          if (chatIndex <0) {
+            return prev
+          }
+          else {
+        const messages = prev[chatIndex].messages
+          messages.push(message)
+          prev[chatIndex].messages = messages
+           return [...prev]
+          }
+        })
+        }
+      
+
+return {user, trades, chats, updateUser, updateTrades, updateChats, addMessageToChat}
 }

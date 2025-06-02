@@ -63,10 +63,7 @@ const Product = () => {
   const flatListRef = useRef<FlatList>(null);
   const loadedSlider = useRef(false);
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
-  console.log(id);
-
   const property = properties.find((item) => item.id === id);
-  console.log(property, properties);
 
   const {
     control,
@@ -79,6 +76,7 @@ const Product = () => {
     defaultValues: {
       requestedBy: user?.id,
       productRequested: id,
+      location: property?.location,
     },
   });
   const [showDrawer, setShowDrawer] = useState(false);
@@ -294,6 +292,7 @@ const Product = () => {
                               data,
                               "insert"
                             );
+                            console.log(res);
                             if (!res.error) {
                               showToast(
                                 "Success",
@@ -302,10 +301,7 @@ const Product = () => {
                               );
                               setShowDrawer(false);
                             } else {
-                              showToast(
-                                "Failed",
-                                "Failed to open a traded trade"
-                              );
+                              showToast("Failed", "Failed to open a traded");
                             }
                           },
                           (e) => {

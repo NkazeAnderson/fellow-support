@@ -5,24 +5,25 @@ export default function useProperty() {
       const [properties, setProperties] = useState<populatedProductT[]>([]);
   
 
-    function updateProperty(property:populatedProductT | populatedProductT[], remove?:boolean) {
-        
-        if (Array.isArray(property)) {
-            setProperties(prev=>[...prev, ...property])
-            return 
-        }
-        
-        if (remove) {
-          return  setProperties(properties.filter(item=>item.id !== property.id))
-        }
-        const index = properties.findIndex(item=>item.id === property.id)
-        if (index >= 0) {
-            properties[index]=property
-          return  setProperties([...properties])
-        }
-        else {
-          return  setProperties([property, ...properties])
-        }
+    function updateProperty(property:populatedProductT | populatedProductT[], remove?:boolean, toEnd?:boolean) {
+        setProperties(prev=>{
+
+          if (Array.isArray(property)) {
+              return [...prev, ...property]
+          }
+          
+          if (remove) {
+            return  prev.filter(item=>item.id !== property.id)
+          }
+          const index = prev.findIndex(item=>item.id === property.id)
+          if (index >= 0) {
+              prev[index]=property
+            return [...prev]
+          }
+          else {
+            return  toEnd ? [ ...prev, property] : [property, ...prev]
+          }
+        })
        
     }
     return {properties, updateProperty}
