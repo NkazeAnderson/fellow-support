@@ -8,7 +8,7 @@ import { getUser } from "./users"
 const properties: populatedProductT[] = []
 
 
-export const getProperty =async (params:{id?:string, ownerId?:string, searchText?:string},) => {
+export const getProperty =async (params:{id?:string, ownerId?:string, searchText?:string, favorites?:string[]},) => {
     let baseQuery = supabase.from(tables.products)
     const baseQuerySelect = baseQuery.select("*, subCategory (*) , owner (firstName, lastName, id, profilePiture)")
     
@@ -39,6 +39,10 @@ export const getProperty =async (params:{id?:string, ownerId?:string, searchText
             else{}
         }
         return res
+    }
+     else if (params.favorites && params.favorites.length > 0) {
+        // Filter where id is in favorites array
+        return await baseQuerySelect.in("id", params.favorites)
     }
     else{
         return await baseQuerySelect

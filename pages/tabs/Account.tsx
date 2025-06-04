@@ -22,6 +22,7 @@ import {
   ChevronRight,
   CreditCard,
   LogOut,
+  Pen,
   SwitchCamera,
   UserCircle,
 } from "lucide-react-native";
@@ -34,6 +35,7 @@ const Account = () => {
   } = useAppContext();
   const [image, setImage] = useState<ImagePickerAsset>();
   const [showDrawer, setShowDrawer] = useState(false);
+  const [showUserDetails, setShowUserDetails] = useState(false);
   return (
     <>
       <View className="flex flex-1 bg-primary-0 p-2 justify-between">
@@ -74,17 +76,20 @@ const Account = () => {
               >{`${user.firstName} ${user.lastName}`}</Heading>
             </Center>
             <VStack>
-              <Link href={"/tabs"} asChild>
-                <Pressable className="py-3">
-                  <HStack className=" items-center justify-between">
-                    <HStack space="md" className="items-center">
-                      <Icon as={UserCircle} />
-                      <Text>Profile</Text>
-                    </HStack>
-                    <Icon as={ChevronRight} />
+              <View className="py-3">
+                <HStack className=" items-center justify-between">
+                  <HStack space="md" className="items-center">
+                    <Icon as={UserCircle} />
+                    <Text>Profile</Text>
                   </HStack>
-                </Pressable>
-              </Link>
+                  <Button
+                    className=" aspect-square mx-2 rounded-full"
+                    variant="outline"
+                  >
+                    <ButtonIcon as={Pen} />
+                  </Button>
+                </HStack>
+              </View>
 
               <Link href={"/stacks/my-products"} asChild>
                 <Pressable className="py-3">
@@ -98,7 +103,7 @@ const Account = () => {
                 </Pressable>
               </Link>
 
-              <Link href={"/stacks/my-products"} asChild>
+              <Link href={"/stacks/favorites"} asChild>
                 <Pressable className="py-3">
                   <HStack className=" items-center justify-between">
                     <HStack space="md" className="items-center">
@@ -110,7 +115,7 @@ const Account = () => {
                 </Pressable>
               </Link>
 
-              <Link href={"/stacks/my-products"} asChild>
+              <Link href={"/stacks/subscriptions"} asChild>
                 <Pressable className="py-3">
                   <HStack className=" items-center justify-between">
                     <HStack space="md" className="items-center">

@@ -62,6 +62,7 @@ const _layout = () => {
     getProperty({}).then((res) => {
       if (res.data as populatedProductT[]) {
         updateProperty(res.data!);
+        // Todo : Refactor to only pull when needed
         getProperty({ ownerId: user.id }).then((myPropertiesRes) => {
           const data = myPropertiesRes.data as populatedProductT[];
           if (data) {
@@ -78,6 +79,25 @@ const _layout = () => {
             });
           }
         });
+        user.favoriteProducts &&
+          getProperty({ favorites: user.favoriteProducts }).then(
+            (myPropertiesRes) => {
+              const data = myPropertiesRes.data as populatedProductT[];
+              if (data) {
+                const unlisted: populatedProductT[] = [];
+                data.forEach((item) => {
+                  if (
+                    !res.data.some(
+                      (property: populatedProductT) => property.id === item.id
+                    )
+                  ) {
+                    unlisted.push(item);
+                    updateProperty(unlisted);
+                  }
+                });
+              }
+            }
+          );
       } else {
         console.log(res.error);
       }
